@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\ShiftController;
+use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+
+class AuthenticatedSessionController extends Controller
+{
+    /**
+     * Display the login view.
+     */
+    public function create(): View
+    {
+        return view('auth.login');
+    }
+    
+    public function create_admin(): View
+    {
+        return view('auth.login_admin');
+    }
+
+    /**
+     * Handle an incoming authentication request for cashier.
+     */
+    public function store(LoginRequest $request): RedirectResponse
+    {
+        return $this->authenticateAndRedirect($request, 'cashier', 'list_product');
+    }
+
+    /**
+     * Handle an incoming authentication request for admin.
+     */
+    public function store_admin(LoginRequest $request): RedirectResponse
+    {
+        return $this->authenticateAndRedirect($request, 'admin', 'dashboard_admin');
+    }
+
+    /**
+     * Common authentication and redirect logic.
+     */
+    protected function authenticateAndRedirect(LoginRequest $request, string $requiredRole, string $redirectRoute): RedirectResponse
+    {
+        $request->authenticate();
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+        
+        if ($user->hasRole($requiredRole)) {
+            if ($requiredRole === 'cashier' && !ShiftController::activeShiftForCashier($user->id)) {
+                return redirect()->route('cashier.shift.open');
+            }
+
+            return redirect()->route($redirectRoute);
+        }
+
+        // If user doesn't have the required role, log them out
+        $this->performLogout($request);
+        return redirect('/')->withErrors([
+            'role' => 'You are not authorized to access this area.'
+        ]);
+    }
+
+    /**
+     * Destroy an authenticated session.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        $this->performLogout($request);
+        return redirect('/');
+    }
+
+    /**
+     * Common logout logic.
+     */
+    protected function performLogout(Request $request): void
+    {
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
+}
