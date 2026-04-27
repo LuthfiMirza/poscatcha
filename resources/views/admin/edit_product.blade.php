@@ -18,6 +18,9 @@
         <div class="card">
           <div class="card-body">
             <h5 class="card-title">Edit Product Form</h5>
+            <div class="alert alert-info" role="alert">
+              Penambahan stok rutin tidak dilakukan dari halaman ini. Gunakan menu <a href="{{ route('purchases.create') }}" class="alert-link">Restock</a> agar stok masuk tercatat rapi di histori pembelian dan stock movement.
+            </div>
 
             <!-- General Form Elements -->
             <form method="POST" action="{{ route('edit_product_process', $product->id)}}" enctype="multipart/form-data">
@@ -46,7 +49,13 @@
                 </div>
               </div>
               <div class="row mb-3">
-                <label for="product_price" class="col-sm-2 col-form-label">Price</label>
+                <label for="buy_price" class="col-sm-2 col-form-label">Buy Price</label>
+                <div class="col-sm-10">
+                  <input type="number" class="form-control" id="buy_price" name="buy_price" value="{{ (int) $product->buy_price }}" required min="0">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="product_price" class="col-sm-2 col-form-label">Sell Price</label>
                 <div class="col-sm-10">
                   <input type="number" class="form-control" id="product_price" name="product_price" value="{{ $product->product_price }}" required min="1">
                 </div>
@@ -54,7 +63,7 @@
               <div class="row mb-3">
                 <label for="product_profit" class="col-sm-2 col-form-label">Product Profit</label>
                 <div class="col-sm-10">
-                  <input type="number" class="form-control" id="product_profit" name="product_profit" value="{{ $product->product_profit }}" required min="1">
+                  <input type="number" class="form-control" id="product_profit" name="product_profit" value="{{ $product->product_profit }}" readonly>
                 </div>
               </div>
               <div class="row mb-3">
@@ -70,6 +79,7 @@
                 <label for="product_quantity" class="col-sm-2 col-form-label">Quantity</label>
                 <div class="col-sm-10">
                   <input type="number" class="form-control" id="product_quantity" name="product_quantity" value="{{ $product->product_quantity }}" required min="1">
+                  <div class="form-text">Gunakan field ini hanya untuk koreksi input, barang hilang, atau barang rusak. Untuk stok masuk rutin, gunakan Restock.</div>
                 </div>
               </div>
               <div class="row mb-3">
@@ -81,10 +91,9 @@
               <div class="row mb-3">
                 <label for="reason" class="col-sm-2 col-form-label">Reason</label>
                 <div class="col-sm-10">
-                  <select class="form-select" aria-label="Default select example" id="reason" name="reason" required min:1 max:4>
+                  <select class="form-select" aria-label="Default select example" id="reason" name="reason" required>
                     <option selected value="null">Select Reason</option>
-                    <option value="1">Add Stock</option>
-                    <option value="2">Wrong Input</option>
+                    <option value="2">Wrong Input / Correction</option>
                     <option value="3">Product Is Lost</option>
                     <option value="4">Product Is Damaged</option>
                   </select>
@@ -101,4 +110,24 @@
         </div>
     </div>
   </div>
+@endsection
+
+@section('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const buyPriceInput = document.getElementById('buy_price');
+    const sellPriceInput = document.getElementById('product_price');
+    const profitInput = document.getElementById('product_profit');
+
+    const syncProfit = () => {
+      const buyPrice = Number(buyPriceInput.value || 0);
+      const sellPrice = Number(sellPriceInput.value || 0);
+      profitInput.value = Math.max(sellPrice - buyPrice, 0);
+    };
+
+    buyPriceInput.addEventListener('input', syncProfit);
+    sellPriceInput.addEventListener('input', syncProfit);
+    syncProfit();
+  });
+</script>
 @endsection

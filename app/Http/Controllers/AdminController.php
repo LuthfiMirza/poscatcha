@@ -141,11 +141,23 @@ class AdminController extends Controller
 
     public function add_product_process(Request $request)
     {
+        $validated = $request->validate([
+            'product_id' => ['required', 'string', 'max:5', 'unique:products,product_id'],
+            'product_name' => ['required', 'string', 'max:50'],
+            'product_category' => ['required', 'string', 'max:6'],
+            'product_price' => ['required', 'integer', 'min:1', 'gte:buy_price'],
+            'buy_price' => ['required', 'integer', 'min:0'],
+            'product_quantity' => ['required', 'integer', 'min:1'],
+            'product_expired' => ['required', 'date'],
+            'product_image' => ['required', 'file', 'image'],
+        ]);
+
         $transaction_id = "-";
         $status = 1;
         $reason = "Add Product";
         $quantity_before = 0; 
         $user = Auth::user()->name;
+        $productProfit = (int) $validated['product_price'] - (int) $validated['buy_price'];
 
 
         $product_image = null;
@@ -162,14 +174,15 @@ class AdminController extends Controller
         }    
     
         $product = Product::postProduct(
-            $request->product_id,
-            $request->product_name,
-            $request->product_category,
+            $validated['product_id'],
+            $validated['product_name'],
+            $validated['product_category'],
             $product_image,
-            $request->product_price,
-            $request->product_profit,
-            $request->product_quantity,
-            $request->product_expired,
+            $validated['product_price'],
+            $validated['buy_price'],
+            $productProfit,
+            $validated['product_quantity'],
+            $validated['product_expired'],
             $transaction_id,
             $status,
             $reason,
@@ -188,14 +201,24 @@ class AdminController extends Controller
 
     public function edit_product_process(Request $request, $id)
     {
-        // dd($request->all());
-        $product_id = Product::find($id)->product_id;
+        $product = Product::findOrFail($id);
+
+        $validated = $request->validate([
+            'product_name' => ['required', 'string', 'max:50'],
+            'product_category' => ['required', 'string', 'max:6'],
+            'product_price' => ['required', 'integer', 'min:1', 'gte:buy_price'],
+            'buy_price' => ['required', 'integer', 'min:0'],
+            'product_quantity' => ['required', 'integer', 'min:1'],
+            'product_expired' => ['required', 'date'],
+            'product_image' => ['nullable', 'file', 'image'],
+            'reason' => ['required', 'in:2,3,4'],
+        ]);
+
+        $product_id = $product->product_id;
         $transaction_id = "-";
         $status = 2;
-        $reason_message = $request->reason;
-        if ($reason_message == 1) {
-            $reason = "Add Stock";
-        } elseif ($reason_message == 2) {
+        $reason_message = $validated['reason'];
+        if ($reason_message == 2) {
             $reason = "Wrong Input";
         } elseif ($reason_message == 3) {
             $reason = "Product Is Lost";
@@ -205,10 +228,18 @@ class AdminController extends Controller
             $reason = "Wrong Input";
         }
 
-        $quantity_before = Product::find($id)->product_quantity; 
+        $quantity_before = $product->product_quantity;
         $user = Auth::user()->name;
+        $productProfit = (int) $validated['product_price'] - (int) $validated['buy_price'];
 
-        $product = Product::findOrFail($id);
+        if ((int) $validated['product_quantity'] > (int) $quantity_before && $reason_message != 2) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors([
+                    'product_quantity' => 'Penambahan stok rutin tidak bisa dilakukan dari Edit Produk. Gunakan menu Restock.',
+                ]);
+        }
 
         if ($request->hasFile('product_image')) {
             if ($product->product_image) {
@@ -228,13 +259,14 @@ class AdminController extends Controller
         $product = Product::updateProduct(
             $id,
             $product_id,
-            $request->product_name,
-            $request->product_category,
+            $validated['product_name'],
+            $validated['product_category'],
             $product_image,
-            $request->product_price,
-            $request->product_profit,
-            $request->product_quantity,
-            $request->product_expired,
+            $validated['product_price'],
+            $validated['buy_price'],
+            $productProfit,
+            $validated['product_quantity'],
+            $validated['product_expired'],
             $transaction_id,
             $status,
             $reason,
@@ -294,6 +326,15 @@ class AdminController extends Controller
         return view('admin.add_category');
     }
 
+    public function categories_index()
+    {
+        $categories = Category::query()
+            ->orderBy('category_name')
+            ->get();
+
+        return view('admin.categories.index', compact('categories'));
+    }
+
     public function add_category_process(Request $request)
     {
         $user = Auth::user()->name;
@@ -311,7 +352,7 @@ class AdminController extends Controller
 
         Category::create($data_category);
 
-        return redirect()->route('dashboard_admin')->with('success', 'Category added successfully');
+        return redirect()->route('admin.categories.index')->with('success', 'Category added successfully');
     }
 
     public function edit_category($id)
@@ -338,19 +379,40 @@ class AdminController extends Controller
 
         Category::where('id', $id)->update($data_category);     
 
-        return redirect()->route('dashboard_admin')->with('success', 'Category updated successfully');    
+        return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully');    
     }
 
     public function delete_category($id)
     {
         Category::find($id)->delete();
-        return redirect()->route('dashboard_admin')->with('success', 'Category deleted successfully');
+        return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully');
     }
 
-    public function sales_data()
+    public function sales_data(Request $request)
     {
-        $sales = Sale::all();
-        $users = User::where('id', '!=', 1)->get();
+        $users = User::where('id', '!=', 1)
+            ->orderBy('name')
+            ->get();
+
+        $sales = Sale::query()
+            ->when($request->filled('sale_id'), function ($query) use ($request) {
+                $query->where('sale_id', 'like', '%' . $request->sale_id . '%');
+            })
+            ->when($request->filled('cashier_id'), function ($query) use ($request) {
+                $query->where('cashier_id', $request->cashier_id);
+            })
+            ->when($request->filled('payment_method'), function ($query) use ($request) {
+                $query->where('payment_method', $request->payment_method);
+            })
+            ->when($request->filled('date_from'), function ($query) use ($request) {
+                $query->whereDate('created_at', '>=', $request->date_from);
+            })
+            ->when($request->filled('date_to'), function ($query) use ($request) {
+                $query->whereDate('created_at', '<=', $request->date_to);
+            })
+            ->latest()
+            ->get();
+
         return view('admin.sales_data', compact('sales', 'users'));
     }
 

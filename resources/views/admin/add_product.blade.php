@@ -46,7 +46,13 @@
                 </div>
               </div>
               <div class="row mb-3">
-                <label for="product_price" class="col-sm-2 col-form-label">Price</label>
+                <label for="buy_price" class="col-sm-2 col-form-label">Buy Price</label>
+                <div class="col-sm-10">
+                  <input type="number" class="form-control" id="buy_price" name="buy_price" value="{{ old('buy_price', 0) }}" required min="0">
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="product_price" class="col-sm-2 col-form-label">Sell Price</label>
                 <div class="col-sm-10">
                   <input type="number" class="form-control" id="product_price" name="product_price" value="{{ old('product_price') }}" required min="1">
                 </div>
@@ -54,7 +60,7 @@
               <div class="row mb-3">
                 <label for="product_profit" class="col-sm-2 col-form-label">Product Profit</label>
                 <div class="col-sm-10">
-                  <input type="number" class="form-control" id="product_profit" name="product_profit" value="{{ old('product_profit') }}" required min="1">
+                  <input type="number" class="form-control" id="product_profit" name="product_profit" value="{{ old('product_profit', 0) }}" readonly>
                 </div>
               </div>
               <div class="row mb-3">
@@ -86,4 +92,24 @@
         </div>
     </div>
   </div>
+@endsection
+
+@section('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const buyPriceInput = document.getElementById('buy_price');
+    const sellPriceInput = document.getElementById('product_price');
+    const profitInput = document.getElementById('product_profit');
+
+    const syncProfit = () => {
+      const buyPrice = Number(buyPriceInput.value || 0);
+      const sellPrice = Number(sellPriceInput.value || 0);
+      profitInput.value = Math.max(sellPrice - buyPrice, 0);
+    };
+
+    buyPriceInput.addEventListener('input', syncProfit);
+    sellPriceInput.addEventListener('input', syncProfit);
+    syncProfit();
+  });
+</script>
 @endsection

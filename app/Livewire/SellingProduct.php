@@ -14,6 +14,7 @@ use App\Models\Sale;
 use App\Models\CashierShift;
 use App\Models\StockMovement;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class SellingProduct extends Component
 {
@@ -84,7 +85,10 @@ class SellingProduct extends Component
     {
         $validated = max(1, (int) $this->quantities[$id]);
 
-        $cart = Cart::find($id);
+        $cart = Cart::where('id', $id)
+            ->where('cashier_id', $this->cashier_id)
+            ->first();
+
         if ($cart) {
             $cart->quantity = $validated;
             $cart->sub_total = $cart->product_price * $validated;
@@ -169,70 +173,82 @@ class SellingProduct extends Component
 
     public function sellProduct()
     {
-        $sale_id = DB::transaction(function () {
-            $amount = Cart::where('cashier_id', $this->cashier_id)->sum('sub_total');
-            $carts = Cart::where('cashier_id', $this->cashier_id)->get();
-            $status = 4;
-            $reason = "Product Sales";
-            $saleId = Sale::generateInvoiceNumber();
-            $activeShift = CashierShift::query()
-                ->open()
-                ->where('cashier_id', $this->cashier_id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        try {
+            $sale_id = DB::transaction(function () {
+                $amount = Cart::where('cashier_id', $this->cashier_id)->sum('sub_total');
+                $carts = Cart::where('cashier_id', $this->cashier_id)->get();
+                $status = 4;
+                $reason = "Product Sales";
+                $saleId = Sale::generateInvoiceNumber();
+                $activeShift = CashierShift::query()
+                    ->open()
+                    ->where('cashier_id', $this->cashier_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            Sale::create([
-                'sale_id' => $saleId,
-                'shift_id' => $activeShift->id,
-                'cashier_id' => $this->cashier_id,
-                'total' => $amount,
-                'payment_method' => $this->payment_method,
-                'pay' => $this->pay,
-                'change' => $this->change,
-            ]); 
-
-            foreach ($carts as $cart) {
-                $product = Product::where('product_id', $cart->product_id)->lockForUpdate()->first();
-                $buyPrice = (float) ($product->buy_price ?? 0);
-                $sellPrice = (float) $cart->product_price;
-                $profitPerItem = ($sellPrice - $buyPrice) * (int) $cart->quantity;
-
-                DetailSale::create([
+                Sale::create([
                     'sale_id' => $saleId,
-                    'cashier_id' => $cart->cashier_id,
-                    'product_id' => $cart->product_id,
-                    'product_name' => $cart->product_name,
-                    'product_profit' => $profitPerItem,
-                    'product_price' => $cart->product_price,
-                    'buy_price' => $buyPrice,
-                    'quantity' => $cart->quantity,
-                    'sub_total' => $cart->sub_total,
-                ]);
+                    'shift_id' => $activeShift->id,
+                    'cashier_id' => $this->cashier_id,
+                    'total' => $amount,
+                    'payment_method' => $this->payment_method,
+                    'pay' => $this->pay,
+                    'change' => $this->change,
+                ]); 
 
-                $quantity_before = $product->product_quantity;
-                $quantity_after = $product->product_quantity - $cart->quantity;   
+                foreach ($carts as $cart) {
+                    $product = Product::where('product_id', $cart->product_id)->lockForUpdate()->firstOrFail();
+                    $buyPrice = (float) ($product->buy_price ?? 0);
+                    $sellPrice = (float) $cart->product_price;
+                    $profitPerItem = ($sellPrice - $buyPrice) * (int) $cart->quantity;
+                    $quantity_before = $product->product_quantity;
+                    $quantity_after = $product->product_quantity - $cart->quantity;
 
-                StockMovement::create([
-                    'product_id' => $cart->product_id,
-                    'transaction_id' => $saleId,
-                    'product_name' => $cart->product_name,
-                    'status' => $status,
-                    'source' => 'sale',
-                    'reason' => $reason,
-                    'cashier_id' => $cart->cashier_id,
-                    'quantity_before' => $quantity_before,
-                    'quantity_after' => $quantity_after,
-                    'action_by' => $this->cashier_name,
-                ]);
+                    if ($quantity_after < 0) {
+                        throw ValidationException::withMessages([
+                            'stock' => 'Stok produk "' . $cart->product_name . '" tidak mencukupi. Sisa stok saat ini: ' . $quantity_before . '.',
+                        ]);
+                    }
 
-                $product->product_quantity = $quantity_after;
-                $product->save();
-            }
+                    DetailSale::create([
+                        'sale_id' => $saleId,
+                        'cashier_id' => $cart->cashier_id,
+                        'product_id' => $cart->product_id,
+                        'product_name' => $cart->product_name,
+                        'product_profit' => $profitPerItem,
+                        'product_price' => $cart->product_price,
+                        'buy_price' => $buyPrice,
+                        'quantity' => $cart->quantity,
+                        'sub_total' => $cart->sub_total,
+                    ]);
 
-            Cart::where('cashier_id', $this->cashier_id)->delete();
+                    StockMovement::create([
+                        'product_id' => $cart->product_id,
+                        'transaction_id' => $saleId,
+                        'product_name' => $cart->product_name,
+                        'status' => $status,
+                        'source' => 'sale',
+                        'reason' => $reason,
+                        'cashier_id' => $cart->cashier_id,
+                        'quantity_before' => $quantity_before,
+                        'quantity_after' => $quantity_after,
+                        'action_by' => $this->cashier_name,
+                    ]);
 
-            return $saleId;
-        });
+                    $product->product_quantity = $quantity_after;
+                    $product->save();
+                }
+
+                Cart::where('cashier_id', $this->cashier_id)->delete();
+
+                return $saleId;
+            });
+        } catch (ValidationException $exception) {
+            session()->flash('error', collect($exception->errors())->flatten()->first() ?? 'Stok produk tidak mencukupi.');
+            $this->refreshCarts();
+
+            return;
+        }
 
         $this->last_sale_id = $sale_id;
         $this->refreshCarts();

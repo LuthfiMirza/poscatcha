@@ -5,7 +5,7 @@
   <h1>Pending Selling Product</h1>
   <nav>
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{{ route('list_product')}}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ route('selling_product')}}">Home</a></li>
       <li class="breadcrumb-item active">Pending Selling Product</li>
     </ol>
   </nav>

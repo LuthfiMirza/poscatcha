@@ -43,15 +43,16 @@ class Product extends Model
         return $this->hasMany(PurchaseItem::class, 'product_id', 'product_id');
     }
 
-    public static function postProduct($product_id, $product_name, $product_category, $product_image, $product_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user)
+    public static function postProduct($product_id, $product_name, $product_category, $product_image, $product_price, $buy_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user)
     {
-        return DB::transaction(function () use ($product_id, $product_name, $product_category, $product_image, $product_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user) {
+        return DB::transaction(function () use ($product_id, $product_name, $product_category, $product_image, $product_price, $buy_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user) {
             $product = self::create([
                 'product_id' => $product_id,
                 'product_name' => $product_name,
                 'product_category' => $product_category,
                 'product_image' => $product_image,
                 'product_price' => $product_price,
+                'buy_price' => $buy_price,
                 'product_profit' => $product_profit,
                 'product_quantity' => $product_quantity,
                 'product_expired' => $product_expired
@@ -73,14 +74,15 @@ class Product extends Model
         });
     }
 
-    public static function updateProduct($id, $product_id, $product_name, $product_category, $product_image, $product_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user)
+    public static function updateProduct($id, $product_id, $product_name, $product_category, $product_image, $product_price, $buy_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user)
     {
-        return DB::transaction(function () use ($id, $product_id, $product_name, $product_category, $product_image, $product_price,  $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user,) {
+        return DB::transaction(function () use ($id, $product_id, $product_name, $product_category, $product_image, $product_price, $buy_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user,) {
             $product = self::find($id);
             $product->product_name = $product_name;
             $product->product_category = $product_category;
             $product->product_image = $product_image;
             $product->product_price = $product_price;
+            $product->buy_price = $buy_price;
             $product->product_profit = $product_profit;
             $product->product_quantity = $product_quantity;
             $product->product_expired = $product_expired;

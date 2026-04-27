@@ -49,7 +49,7 @@ class ShiftController extends Controller
 
         if ($activeShift) {
             return redirect()
-                ->route('list_product')
+                ->route('selling_product')
                 ->with('success', 'Shift Anda masih aktif.');
         }
 
@@ -62,7 +62,7 @@ class ShiftController extends Controller
 
         if ($activeShift) {
             return redirect()
-                ->route('list_product')
+                ->route('selling_product')
                 ->with('success', 'Shift Anda masih aktif.');
         }
 
@@ -80,7 +80,7 @@ class ShiftController extends Controller
         ]);
 
         return redirect()
-            ->route('list_product')
+            ->route('selling_product')
             ->with('success', 'Shift berhasil dibuka.');
     }
 

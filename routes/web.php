@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/edit_product_admin_process/{id}', [AdminController::class, 'edit_product_process'])->name('edit_product_process');
     Route::get('/delete_product_admin/{id}', [AdminController::class, 'delete_product'])->name('delete_product');
     Route::post('/delete_product_admin_process/{id}', [AdminController::class, 'delete_product_process'])->name('delete_product_process');
+    Route::get('/admin/categories', [AdminController::class, 'categories_index'])->name('admin.categories.index');
     Route::get('/add_category_admin', [AdminController::class, 'add_category'])->name('add_category');
     Route::post('/add_category_admin_process', [AdminController::class, 'add_category_process'])->name('add_category_process');
     Route::get('/edit_category_admin/{id}', [AdminController::class, 'edit_category'])->name('edit_category');

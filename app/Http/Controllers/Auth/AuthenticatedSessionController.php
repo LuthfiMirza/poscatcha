@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        return $this->authenticateAndRedirect($request, 'cashier', 'list_product');
+        return $this->authenticateAndRedirect($request, 'cashier', 'selling_product');
     }
 
     /**
