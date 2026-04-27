@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin/shifts', [ShiftController::class, 'index'])->name('admin.shifts.index');
     Route::get('/admin/shifts/export/excel', [ShiftController::class, 'exportExcel'])->name('admin.shifts.export.excel');
     Route::get('/admin/shifts/export/pdf', [ShiftController::class, 'exportPdf'])->name('admin.shifts.export.pdf');
+    Route::get('/admin/chatbot/logs', [AdminController::class, 'chatbot_logs'])->name('admin.chatbot.logs');
 
     Route::get('/user_data', [AdminController::class, 'user_data'])->name('user_data');
     Route::get('/add_user', [AdminController::class, 'add_user'])->name('add_user');

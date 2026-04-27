@@ -57,4 +57,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(CashierShift::class, 'cashier_id');
     }
+
+    public function adminChatbotLogs(): HasMany
+    {
+        return $this->hasMany(AdminChatbotLog::class);
+    }
 }

@@ -7,21 +7,84 @@
         <div class="admin-chatbot-panel__avatar">AI</div>
         <div>
           <div class="admin-chatbot-panel__title">Admin Chatbot</div>
-          <div class="admin-chatbot-panel__subtitle">Read-only · Data dari database</div>
+          <div class="admin-chatbot-panel__subtitle">Read-only · Konteks percakapan aktif · Data dari database</div>
         </div>
       </div>
 
-      <button type="button" id="admin-chatbot-panel-close" class="admin-chatbot-panel__close" aria-label="Tutup Admin Chatbot">
-        <i class="bi bi-x-lg"></i>
-      </button>
+      <div class="admin-chatbot-panel__header-actions">
+        <button type="button" class="admin-chatbot-panel__ghost" wire:click="clearConversation">
+          Reset
+        </button>
+        <button type="button" id="admin-chatbot-panel-close" class="admin-chatbot-panel__close" aria-label="Tutup Admin Chatbot">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
     </div>
 
     <div id="admin-chatbot-history" class="admin-chatbot-panel__messages">
       @foreach ($messages as $message)
+        @php
+          $intent = $message['meta']['intent'] ?? null;
+          $success = $message['meta']['success'] ?? null;
+          $latency = $message['meta']['latency_ms'] ?? null;
+          $insightLabel = $message['meta']['insight_label'] ?? null;
+          $insightTier = $message['meta']['insight_tier'] ?? null;
+          $feedback = $message['feedback'] ?? null;
+        @endphp
+
         <div class="admin-chatbot-message admin-chatbot-message--{{ $message['role'] }}" wire:key="admin-chatbot-message-{{ $loop->index }}">
+          @if ($message['role'] === 'assistant' && $intent)
+            <div class="admin-chatbot-message__meta">
+              @if ($insightLabel)
+                <span class="admin-chatbot-badge admin-chatbot-badge--insight {{ $insightTier === 'primary' ? 'is-primary' : '' }}">{{ $insightLabel }}</span>
+              @endif
+              <span class="admin-chatbot-badge">{{ str_replace('_', ' ', $intent) }}</span>
+              @if ($success === true)
+                <span class="admin-chatbot-badge admin-chatbot-badge--success">ok</span>
+              @elseif ($success === false)
+                <span class="admin-chatbot-badge admin-chatbot-badge--warning">cek</span>
+              @endif
+              @if ($latency !== null)
+                <span class="admin-chatbot-badge admin-chatbot-badge--muted">{{ $latency }} ms</span>
+              @endif
+            </div>
+          @endif
+
           <div class="admin-chatbot-message__bubble">
             {{ $message['text'] }}
+
+            @if (($message['actions'] ?? []) !== [])
+              <div class="admin-chatbot-actions">
+                @foreach ($message['actions'] as $action)
+                  <a href="{{ $action['url'] }}" class="admin-chatbot-action" @if (($action['url'] ?? '#') === '#') aria-disabled="true" @endif>
+                    {{ $action['label'] }}
+                  </a>
+                @endforeach
+              </div>
+            @endif
+
+            @if (($message['role'] ?? null) === 'assistant' && !empty($message['log_id']))
+              <div class="admin-chatbot-feedback">
+                <button
+                  type="button"
+                  class="admin-chatbot-feedback__button {{ $feedback === 'helpful' ? 'is-active' : '' }}"
+                  wire:click="submitFeedback({{ $loop->index }}, 'helpful')"
+                  @disabled(!empty($feedback))
+                >
+                  Membantu
+                </button>
+                <button
+                  type="button"
+                  class="admin-chatbot-feedback__button {{ $feedback === 'not_helpful' ? 'is-active is-negative' : '' }}"
+                  wire:click="submitFeedback({{ $loop->index }}, 'not_helpful')"
+                  @disabled(!empty($feedback))
+                >
+                  Tidak membantu
+                </button>
+              </div>
+            @endif
           </div>
+
           <div class="admin-chatbot-message__time">{{ $message['time'] ?? now()->format('H:i') }}</div>
         </div>
       @endforeach
@@ -29,23 +92,13 @@
 
     <div class="admin-chatbot-panel__composer">
       <div class="admin-chatbot-chips" aria-label="Quick suggestions">
-        @foreach (array_slice($quickQuestions, 0, 4) as $quickQuestion)
+        @foreach (array_slice($quickQuestions, 0, 8) as $quickQuestion)
           <button
             type="button"
             class="admin-chatbot-chip"
             wire:click="askQuick('{{ $quickQuestion }}')"
           >
-            @if ($quickQuestion === 'Produk stok menipis')
-              Stok menipis
-            @elseif ($quickQuestion === 'Produk terlaris bulan ini')
-              Terlaris bulan ini
-            @elseif ($quickQuestion === 'Ringkasan penjualan minggu ini')
-              Ringkasan minggu ini
-            @elseif ($quickQuestion === 'Produk akan expired 30 hari')
-              Expired 30 hari
-            @else
-              {{ $quickQuestion }}
-            @endif
+            {{ $quickQuestion }}
           </button>
         @endforeach
       </div>
@@ -65,6 +118,10 @@
       @error('question')
         <div class="admin-chatbot-inputbar__error">{{ $message }}</div>
       @enderror
+
+      <div class="admin-chatbot-panel__hint">
+        Contoh: <span>"cek stok gula"</span>, <span>"penjualan minggu ini dibanding minggu lalu"</span>, <span>"kasir mana yang naik omzetnya bulan ini"</span>
+      </div>
     </div>
   </aside>
 
@@ -105,7 +162,7 @@
         position: fixed;
         top: 0;
         right: 0;
-        width: 380px;
+        width: 400px;
         max-width: 100vw;
         height: 100vh;
         display: flex;
@@ -119,8 +176,8 @@
       }
 
       .admin-chatbot-panel__header {
-        height: 60px;
-        padding: 0 16px;
+        min-height: 68px;
+        padding: 12px 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -161,9 +218,16 @@
       .admin-chatbot-panel__subtitle {
         color: #6c757d;
         font-size: 0.76rem;
-        line-height: 1.15;
+        line-height: 1.25;
       }
 
+      .admin-chatbot-panel__header-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .admin-chatbot-panel__ghost,
       .admin-chatbot-panel__close {
         width: 36px;
         height: 36px;
@@ -177,6 +241,15 @@
         transition: background-color 160ms ease, color 160ms ease;
       }
 
+      .admin-chatbot-panel__ghost {
+        width: auto;
+        padding: 0 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .admin-chatbot-panel__ghost:hover,
       .admin-chatbot-panel__close:hover {
         background: rgba(13, 110, 253, 0.1);
         color: #0d6efd;
@@ -193,7 +266,7 @@
       .admin-chatbot-message {
         display: flex;
         flex-direction: column;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
       }
 
       .admin-chatbot-message--assistant {
@@ -204,11 +277,56 @@
         align-items: flex-end;
       }
 
+      .admin-chatbot-message__meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      .admin-chatbot-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+        font-size: 10px;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      .admin-chatbot-badge--success {
+        background: rgba(25, 135, 84, 0.12);
+        color: #198754;
+      }
+
+      .admin-chatbot-badge--warning {
+        background: rgba(255, 193, 7, 0.18);
+        color: #9a6c00;
+      }
+
+      .admin-chatbot-badge--muted {
+        background: rgba(148, 163, 184, 0.18);
+        color: #52627d;
+      }
+
+      .admin-chatbot-badge--insight {
+        background: rgba(232, 101, 10, 0.12);
+        color: #b45309;
+      }
+
+      .admin-chatbot-badge--insight.is-primary {
+        background: rgba(232, 101, 10, 0.16);
+        color: #9a3412;
+      }
+
       .admin-chatbot-message__bubble {
-        max-width: 88%;
+        max-width: 92%;
         padding: 12px 14px;
         font-size: 0.92rem;
-        line-height: 1.5;
+        line-height: 1.55;
         word-break: break-word;
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
       }
@@ -223,6 +341,66 @@
         background: #0d6efd;
         color: #ffffff;
         border-radius: 12px 4px 12px 12px;
+      }
+
+      .admin-chatbot-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .admin-chatbot-action {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 10px;
+        border: 1px solid rgba(13, 110, 253, 0.18);
+        border-radius: 999px;
+        background: rgba(13, 110, 253, 0.05);
+        color: #0d6efd;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .admin-chatbot-action:hover {
+        background: rgba(13, 110, 253, 0.12);
+        color: #0b5ed7;
+      }
+
+      .admin-chatbot-feedback {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .admin-chatbot-feedback__button {
+        min-height: 28px;
+        padding: 0 10px;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        border-radius: 999px;
+        background: #ffffff;
+        color: #52627d;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .admin-chatbot-feedback__button.is-active {
+        background: rgba(25, 135, 84, 0.12);
+        border-color: rgba(25, 135, 84, 0.2);
+        color: #198754;
+      }
+
+      .admin-chatbot-feedback__button.is-active.is-negative {
+        background: rgba(220, 53, 69, 0.12);
+        border-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+      }
+
+      .admin-chatbot-feedback__button:disabled {
+        cursor: default;
+        opacity: 0.95;
       }
 
       .admin-chatbot-message__time {
@@ -317,10 +495,19 @@
       }
 
       .admin-chatbot-inputbar__error {
-        margin-top: 6px;
         padding-left: 4px;
         color: #dc3545;
         font-size: 0.76rem;
+      }
+
+      .admin-chatbot-panel__hint {
+        color: #94a3b8;
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .admin-chatbot-panel__hint span {
+        color: #52627d;
       }
 
       .admin-chatbot-toggle {
@@ -391,7 +578,7 @@
       }
 
       body.admin-chatbot-open .admin-chatbot-toggle {
-        transform: translateX(calc(-380px - 16px));
+        transform: translateX(calc(-400px - 16px));
         animation: none;
       }
 

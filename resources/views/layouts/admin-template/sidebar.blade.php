@@ -68,6 +68,13 @@
         </a>
       </li>
 
+      <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('admin.chatbot.logs') ? '' : 'collapsed' }}" href="{{ route('admin.chatbot.logs') }}">
+          <i class="bx bx-bot"></i>
+          <span>Audit Chatbot</span>
+        </a>
+      </li>
+
       <li class="nav-heading">Laporan</li>
       <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('reports.profit*') ? '' : 'collapsed' }}" href="{{ route('reports.profit') }}">
