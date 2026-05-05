@@ -113,51 +113,6 @@ class AdminChatbotFeatureTest extends TestCase
         ]);
     }
 
-    public function test_admin_audit_page_shows_filtered_chatbot_logs(): void
-    {
-        $admin = $this->makeAdminUser();
-
-        AdminChatbotLog::query()->create([
-            'user_id' => $admin->id,
-            'session_id' => 'audit-1',
-            'question' => 'bantuan',
-            'normalized_question' => 'bantuan',
-            'intent' => 'bantuan_chatbot',
-            'parameters' => [],
-            'success' => true,
-            'response_summary' => 'Chatbot menjelaskan daftar kemampuan.',
-            'response_meta' => [],
-            'context_snapshot' => ['last_intent' => 'bantuan_chatbot'],
-            'latency_ms' => 12,
-            'feedback' => 'helpful',
-        ]);
-
-        AdminChatbotLog::query()->create([
-            'user_id' => $admin->id,
-            'session_id' => 'audit-2',
-            'question' => 'pertanyaan gagal',
-            'normalized_question' => 'pertanyaan gagal',
-            'intent' => 'unknown',
-            'parameters' => [],
-            'success' => false,
-            'response_summary' => 'Pertanyaan belum dikenali.',
-            'response_meta' => [],
-            'context_snapshot' => [],
-            'latency_ms' => 20,
-            'feedback' => 'not_helpful',
-        ]);
-
-        $response = $this->actingAs($admin)->get(route('admin.chatbot.logs', [
-            'feedback' => 'helpful',
-        ]));
-
-        $response->assertOk();
-        $response->assertSee('Audit Chatbot');
-        $response->assertSee('bantuan');
-        $response->assertDontSee('pertanyaan gagal');
-        $response->assertSee('Helpful');
-    }
-
     protected function makeAdminUser(): User
     {
         $user = User::factory()->create();

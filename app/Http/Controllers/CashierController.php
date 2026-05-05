@@ -7,15 +7,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Category;
-use App\Models\Cart;
 use App\Models\DetailSale;
 use App\Models\Sale;
-use App\Models\DetailPendingCart;
 use App\Models\Product;
-use App\Models\PendingCart;
 use App\Models\User;
-use App\Models\StockMovement;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class CashierController extends Controller
@@ -57,49 +52,6 @@ class CashierController extends Controller
         ];
 
         return view('cashier.print', $receiptData);
-    }
-
-    public function pending_selling_product()
-    {
-        $pendings = PendingCart::where('cashier_id', Auth::id())
-            ->latest()
-            ->get();
-
-        return view('cashier.pending_selling_product', compact('pendings'));
-    }
-
-    public function detail_pending_selling_product($cart_id)
-    {
-        $pending = PendingCart::where('cart_id', $cart_id)
-            ->where('cashier_id', Auth::id())
-            ->first();
-
-        if (!$pending) {
-            return redirect()
-                ->route('pending_selling_product')
-                ->with('error', 'Pending order tidak ditemukan atau bukan milik Anda.');
-        }
-
-        return view('cashier.detail_pending_selling_product', compact('cart_id'));
-    }
-
-    public function delete_pending_selling_product($id)
-    {
-        $pending = PendingCart::where('id', $id)
-            ->where('cashier_id', Auth::id())
-            ->first();
-
-        if (!$pending) {
-            return redirect()
-                ->route('pending_selling_product')
-                ->with('error', 'Pending order tidak ditemukan atau bukan milik Anda.');
-        }
-
-        $pending->delete();
-
-        return redirect()
-            ->route('pending_selling_product')
-            ->with('success', 'Pending order berhasil dihapus.');
     }
 
     public function cashier_profile()

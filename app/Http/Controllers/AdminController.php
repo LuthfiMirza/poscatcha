@@ -10,7 +10,6 @@ use Illuminate\Validation\Rules;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Carbon;
-use App\Models\AdminChatbotLog;
 use App\Models\Category;
 use App\Models\CashierShift;
 use App\Models\DetailSale;
@@ -452,62 +451,6 @@ class AdminController extends Controller
     {
         $users = User::where('id', '!=', 1)->get();
         return view('admin.user_data', compact('users'));
-    }
-
-    public function chatbot_logs(Request $request)
-    {
-        $adminUsers = User::role('admin')
-            ->orderBy('name')
-            ->get();
-
-        $query = AdminChatbotLog::query()
-            ->with('user')
-            ->when($request->filled('intent'), function ($builder) use ($request) {
-                $builder->where('intent', $request->intent);
-            })
-            ->when($request->filled('success'), function ($builder) use ($request) {
-                $builder->where('success', $request->success === '1');
-            })
-            ->when($request->filled('feedback'), function ($builder) use ($request) {
-                $builder->where('feedback', $request->feedback);
-            })
-            ->when($request->filled('user_id'), function ($builder) use ($request) {
-                $builder->where('user_id', $request->user_id);
-            })
-            ->when($request->filled('date_from'), function ($builder) use ($request) {
-                $builder->whereDate('created_at', '>=', $request->date_from);
-            })
-            ->when($request->filled('date_to'), function ($builder) use ($request) {
-                $builder->whereDate('created_at', '<=', $request->date_to);
-            })
-            ->when($request->filled('search'), function ($builder) use ($request) {
-                $search = $request->search;
-
-                $builder->where(function ($inner) use ($search) {
-                    $inner->where('question', 'like', '%' . $search . '%')
-                        ->orWhere('response_summary', 'like', '%' . $search . '%')
-                        ->orWhere('session_id', 'like', '%' . $search . '%');
-                });
-            });
-
-        $summaryQuery = clone $query;
-        $logs = $query->latest()->paginate(15)->withQueryString();
-        $intents = AdminChatbotLog::query()
-            ->select('intent')
-            ->distinct()
-            ->orderBy('intent')
-            ->pluck('intent');
-
-        $summary = [
-            'total_questions' => (clone $summaryQuery)->count(),
-            'success_count' => (clone $summaryQuery)->where('success', true)->count(),
-            'failure_count' => (clone $summaryQuery)->where('success', false)->count(),
-            'helpful_count' => (clone $summaryQuery)->where('feedback', 'helpful')->count(),
-            'not_helpful_count' => (clone $summaryQuery)->where('feedback', 'not_helpful')->count(),
-            'avg_latency_ms' => round((float) ((clone $summaryQuery)->avg('latency_ms') ?? 0)),
-        ];
-
-        return view('admin.chatbot_logs', compact('logs', 'summary', 'intents', 'adminUsers'));
     }
 
     public function add_user()

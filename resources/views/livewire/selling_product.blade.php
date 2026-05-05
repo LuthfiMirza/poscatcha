@@ -540,24 +540,6 @@
             font-weight: 700;
         }
 
-        .pos-pending-btn {
-            width: 100%;
-            min-height: 42px;
-            margin-bottom: 8px;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            background: #ffffff;
-            color: #6b7280;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .pos-pending-btn:hover,
-        .pos-pending-btn:focus {
-            border-color: var(--cha-orange);
-            color: var(--cha-orange);
-        }
-
         .pos-print-btn {
             width: 100%;
             min-height: 46px;
@@ -577,8 +559,7 @@
             color: #ffffff;
         }
 
-        .pos-print-btn:disabled,
-        .pos-pending-btn:disabled {
+        .pos-print-btn:disabled {
             opacity: 0.55;
             cursor: not-allowed;
         }
@@ -881,10 +862,6 @@
                 </div>
 
                 <div class="mt-3">
-                    <button class="pos-pending-btn" wire:click="addPendingOrder()" @if($cartIsEmpty) disabled @endif>
-                        Simpan Pending
-                    </button>
-
                     <button
                         class="pos-print-btn"
                         wire:click="sellProduct()"

@@ -6,14 +6,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use App\Models\Cart;
-use App\Models\DetailPendingCart;
 use App\Models\DetailSale;
 use App\Models\Product;
-use App\Models\PendingCart;
 use App\Models\Sale;
 use App\Models\CashierShift;
 use App\Models\StockMovement;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SellingProduct extends Component
@@ -137,36 +134,6 @@ class SellingProduct extends Component
         Cart::where('id', $id)
             ->where('cashier_id', $this->cashier_id)
             ->delete();
-
-        $this->refreshCarts();
-    }
-
-    public function addPendingOrder()
-    {
-        $cart_id = date('Y-m-d_H:i:s') . '_' . Str::random(10);
-        $amount = Cart::where('cashier_id', $this->cashier_id)->sum('sub_total');
-        $carts = Cart::where('cashier_id', $this->cashier_id)->get();
-        
-        PendingCart::create([
-            'cart_id' => $cart_id,
-            'cashier_id' => $this->cashier_id,
-            'amount' => $amount,
-        ]);
-
-        foreach ($carts as $cart) {
-            DetailPendingCart::create([
-                'cart_id' => $cart_id,
-                'cashier_id' => $cart->cashier_id,
-                'product_id' => $cart->product_id,
-                'product_name' => $cart->product_name,
-                'product_profit' => $cart->product_profit,
-                'product_price' => $cart->product_price,
-                'quantity' => $cart->quantity,
-                'sub_total' => $cart->sub_total,
-            ]);
-        }
-
-        Cart::where('cashier_id', $this->cashier_id)->delete();
 
         $this->refreshCarts();
     }

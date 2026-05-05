@@ -46,8 +46,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin/shifts', [ShiftController::class, 'index'])->name('admin.shifts.index');
     Route::get('/admin/shifts/export/excel', [ShiftController::class, 'exportExcel'])->name('admin.shifts.export.excel');
     Route::get('/admin/shifts/export/pdf', [ShiftController::class, 'exportPdf'])->name('admin.shifts.export.pdf');
-    Route::get('/admin/chatbot/logs', [AdminController::class, 'chatbot_logs'])->name('admin.chatbot.logs');
-
     Route::get('/user_data', [AdminController::class, 'user_data'])->name('user_data');
     Route::get('/add_user', [AdminController::class, 'add_user'])->name('add_user');
     Route::post('/add_user_process', [AdminController::class, 'add_user_process'])->name('add_user_process');
@@ -72,9 +70,6 @@ Route::middleware(['auth', 'verified', 'role:cashier'])->group(function () {
 
         Route::get('selling_product', [CashierController::class, 'selling_product'])->name('selling_product');
 
-        Route::get('/pending_selling_product', [CashierController::class, 'pending_selling_product'])->name('pending_selling_product');
-        Route::get('/detail_pending_selling_product/{cart_id}', [CashierController::class, 'detail_pending_selling_product'])->name('detail_pending_selling_product');
-        Route::get('/delete_pending_selling_product/{id}', [CashierController::class, 'delete_pending_selling_product'])->name('delete_pending_selling_product');
     });
 
     Route::get('/cashier_profile', [CashierController::class, 'cashier_profile'])->name('cashier_profile');

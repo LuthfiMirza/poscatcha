@@ -125,9 +125,15 @@ class ShiftController extends Controller
 
         $difference = (float) $validated['closing_cash'] - $summary['expected_cash'];
 
+        $message = 'Shift berhasil ditutup. Selisih kas: Rp' . number_format($difference, 2, ',', '.');
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()
-            ->route('cashier.shift.open')
-            ->with('success', 'Shift berhasil ditutup. Selisih kas: Rp' . number_format($difference, 2, ',', '.'));
+            ->route('login')
+            ->with('status', $message);
     }
 
     public static function activeShiftForCashier(?int $cashierId): ?CashierShift

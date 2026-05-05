@@ -7,10 +7,6 @@
       $pageTitle = 'Tutup Shift';
   } elseif (request()->routeIs('list_product')) {
       $pageTitle = 'List Product';
-  } elseif (request()->routeIs('pending_selling_product')) {
-      $pageTitle = 'Pending Selling Product';
-  } elseif (request()->routeIs('detail_pending_selling_product')) {
-      $pageTitle = 'Detail Pending';
   } elseif (request()->routeIs('selling_product')) {
       $pageTitle = 'Menu';
   } elseif (request()->routeIs('cashier_profile')) {
@@ -18,7 +14,7 @@
   }
 
   $resolvedPageTitle = trim($__env->yieldContent('page-title', $pageTitle));
-  $isPosPage = request()->routeIs('selling_product', 'pending_selling_product', 'list_product');
+  $isPosPage = request()->routeIs('selling_product', 'list_product');
   $activeShift = $headerShiftInfo['shift'] ?? null;
   $shiftTransactionCount = $headerShiftInfo['transactions_count'] ?? 0;
 @endphp

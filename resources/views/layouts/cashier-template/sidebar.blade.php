@@ -1,9 +1,8 @@
 @php
-  $isPosPage = request()->routeIs('selling_product', 'pending_selling_product', 'list_product');
+  $isPosPage = request()->routeIs('selling_product', 'list_product');
   $isShiftNav = request()->routeIs('cashier.shift.open') || request()->is('cashier/shift/open');
   $isCloseNav = request()->routeIs('cashier.shift.close') || request()->is('cashier/shift/close');
   $isMenuNav = request()->routeIs('list_product') || request()->is('list_product*');
-  $isPendingNav = request()->routeIs('pending_selling_product', 'detail_pending_selling_product') || request()->is('pending*') || request()->is('pending_selling_product*') || request()->is('detail_pending_selling_product*');
   $isCashierNav = request()->routeIs('selling_product') || request()->is('selling_product*');
 @endphp
 
@@ -137,18 +136,6 @@
               <path d="M14 14H19.5V19.5H14V14Z" stroke="currentColor" stroke-width="1.8"></path>
             </svg>
             <span class="cashier-pos-sidebar__label">Menu</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="cashier-pos-sidebar__link {{ $isPendingNav ? 'is-active' : '' }}" href="{{ route('pending_selling_product') }}">
-            <svg class="cashier-pos-sidebar__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M8 3.75H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-              <path d="M8 20.25H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-              <path d="M9 3.75V8.25L12 11.25L15 8.25V3.75" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
-              <path d="M9 20.25V15.75L12 12.75L15 15.75V20.25" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
-            </svg>
-            <span class="cashier-pos-sidebar__label">Pending</span>
           </a>
         </li>
 
@@ -298,17 +285,6 @@
             <path d="M12 10.75V19.75" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
           </svg>
           <span>List Product</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="cashier-sidebar-link {{ request()->routeIs('pending_selling_product', 'detail_pending_selling_product') ? 'is-active' : '' }}" href="{{ route('pending_selling_product')}}">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"></circle>
-            <path d="M10 9V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-            <path d="M14 9V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-          </svg>
-          <span>Pending Selling Product</span>
         </a>
       </li>
 
