@@ -29,6 +29,142 @@
   <!-- Template Main CSS File -->
   <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
 
+  <style>
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(106, 170, 42, 0.18), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(232, 101, 10, 0.16), transparent 30%),
+        linear-gradient(135deg, #f7fbf2 0%, #fff7ef 100%);
+      font-family: 'Poppins', 'Open Sans', sans-serif;
+    }
+
+    .login-shell {
+      min-height: 100vh;
+    }
+
+    .login-panel {
+      width: 100%;
+      max-width: 430px;
+    }
+
+    .login-brand {
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .login-brand-logo {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid #fff;
+      box-shadow: 0 10px 28px rgba(106, 170, 42, 0.24);
+    }
+
+    .login-brand-text {
+      color: #1a1a1a;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .login-brand-text__cat {
+      color: #6aaa2a;
+    }
+
+    .login-brand-text__cha {
+      color: #e8650a;
+    }
+
+    .login-card {
+      border: 0;
+      border-radius: 24px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+      backdrop-filter: blur(14px);
+    }
+
+    .login-card .card-body {
+      padding: 34px;
+    }
+
+    .login-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #eefbe6;
+      color: #5b941f;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .login-title {
+      color: #172033;
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .login-subtitle {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .login-form .form-label {
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .login-form .form-control,
+    .login-form .input-group-text {
+      min-height: 46px;
+      border-color: #e2e8f0;
+      background: #f8fafc;
+      border-radius: 14px;
+    }
+
+    .login-form .input-group-text {
+      color: #6aaa2a;
+      border-right: 0;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    .login-form .input-group .form-control {
+      border-left: 0;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    .login-form .form-control:focus {
+      border-color: #9bd36b;
+      background: #fff;
+      box-shadow: 0 0 0 0.22rem rgba(106, 170, 42, 0.16);
+    }
+
+    .login-button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 14px;
+      background: #6aaa2a;
+      box-shadow: 0 10px 22px rgba(106, 170, 42, 0.22);
+      font-weight: 800;
+    }
+
+    .login-button:hover,
+    .login-button:focus {
+      background: #5b941f;
+      box-shadow: 0 12px 24px rgba(106, 170, 42, 0.28);
+    }
+  </style>
+
 </head>
 
 <body>
@@ -36,24 +172,25 @@
   <main>
     <div class="container">
 
-      <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
+      <section class="section register login-shell d-flex flex-column align-items-center justify-content-center py-4">
         <div class="container">
           <div class="row justify-content-center">
-            <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
+            <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center login-panel">
 
               <div class="d-flex justify-content-center py-4">
-                <a href="/" class="logo d-flex align-items-center w-auto">
-                  <img src="{{ asset('assets/img/logo.png') }}" alt="">
-                  <span class="d-none d-lg-block">Your Cashier</span>
+                <a href="/" class="login-brand d-flex align-items-center w-auto">
+                  <img src="{{ asset('assets/img/logocat.jpeg') }}" alt="Logo CATcha" class="login-brand-logo">
+                  <span class="login-brand-text d-none d-lg-block"><span class="login-brand-text__cat">CAT</span><span class="login-brand-text__cha">cha</span></span>
                 </a>
               </div>
 
-              <div class="card mb-3">
+              <div class="card mb-3 login-card">
                 <div class="card-body">
 
-                  <div class="pt-4 pb-2">
-                    <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
-                    <p class="text-center small">Enter your email & password to login</p>
+                  <div class="pt-2 pb-4 text-center">
+                    <span class="login-eyebrow">CATcha POS</span>
+                    <h5 class="card-title login-title text-center pb-0 mt-3 mb-2">Selamat Datang di CATcha</h5>
+                    <p class="login-subtitle text-center mb-0">Masuk sebagai kasir untuk mulai melayani transaksi.</p>
                   </div>
 
                   {{-- Session Status --}}
@@ -63,7 +200,7 @@
                     </div>
                   @endif
 
-                  <form method="POST" action="{{ route('login') }}" class="row g-3 needs-validation" novalidate>
+                  <form method="POST" action="{{ route('login') }}" class="row g-3 needs-validation login-form" novalidate>
                     @csrf
 
                     {{-- Email --}}
@@ -89,15 +226,11 @@
 
                     {{-- Submit --}}
                     <div class="col-12">
-                      <button class="btn btn-primary w-100" type="submit">Login</button>
+                      <button class="btn btn-primary w-100 login-button" type="submit">Masuk Kasir</button>
                     </div>
                   </form>
 
                 </div>
-              </div>
-
-              <div class="credits">
-                Designed by Your Cashier</a>
               </div>
 
             </div>
