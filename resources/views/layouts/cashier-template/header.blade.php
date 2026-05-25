@@ -58,28 +58,20 @@
       .cashier-pos-logo {
         width: 32px;
         height: 32px;
-        border-radius: 10px;
-        background: #eefbe6;
-        border: 1px solid #d8eac8;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid #f0f0f0;
         display: inline-flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        line-height: 1;
+        box-shadow: 0 4px 14px rgba(1, 41, 112, 0.12);
       }
 
-      .cashier-pos-logo__cat {
-        color: #6aaa2a;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-      }
-
-      .cashier-pos-logo__cha {
-        color: #e8650a;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
+      .cashier-pos-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
 
       .cashier-pos-header__title {
@@ -216,8 +208,7 @@
 
     <div class="cashier-pos-header__left">
       <div class="cashier-pos-logo" aria-hidden="true">
-        <span class="cashier-pos-logo__cat">CAT</span>
-        <span class="cashier-pos-logo__cha">cha</span>
+        <img src="{{ asset('assets/img/logocat.jpeg') }}" alt="Logo CATcha">
       </div>
 
       <div class="cashier-pos-header__title">{{ $resolvedPageTitle }}</div>
@@ -314,6 +305,15 @@
       .cashier-header .toggle-sidebar-btn {
         color: #0f172a;
         font-size: 1.35rem;
+      }
+
+      .cashier-header-brand-logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 14px rgba(1, 41, 112, 0.12);
       }
 
       .cashier-page-meta {
@@ -487,6 +487,7 @@
 
     <div class="cashier-header-left">
       <i class="bi bi-list toggle-sidebar-btn"></i>
+      <img src="{{ asset('assets/img/logocat.jpeg') }}" alt="Logo CATcha" class="cashier-header-brand-logo">
     </div>
 
     <div class="cashier-header-center">
