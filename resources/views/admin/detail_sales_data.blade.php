@@ -64,7 +64,7 @@
                 <tbody>
                   @foreach ($sales as $index => $sale)
                     <tr>
-                        <th scope="row"><a href="#">{{ $index + 1 }}</a></th>
+                        <th scope="row">{{ $index + 1 }}</th>
                         <td>{{ $sale->sale_id }}</td>
                         <td>{{ $sale->product_id }}</td>
                         <td>{{ $sale->product_name }}</td>

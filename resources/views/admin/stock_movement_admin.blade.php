@@ -56,7 +56,7 @@
               <table class="table table-borderless datatable">
                 <thead>
                   <tr>
-                    <th scope="col"><a href="#" style="margin-right: 8px">No</a></th>
+                    <th scope="col">No</th>
                     <th scope="col">Product ID</th>
                     <th scope="col">Transaction ID</th>
                     <th scope="col">Product Name</th>
@@ -73,7 +73,7 @@
                 <tbody>
                   @foreach ($stock_movements as $index => $stock_movement)                      
                   <tr>
-                    <th scope="row"><a href="#">{{ $index + 1 }}</a></th>
+                    <th scope="row">{{ $index + 1 }}</th>
                     <td>
                       @if ($stock_movement->product_id == null)
                         Product Deleted 

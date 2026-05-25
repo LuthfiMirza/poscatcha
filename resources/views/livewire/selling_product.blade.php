@@ -7,6 +7,9 @@
     $categories = $categoryMap->filter(function ($categoryName, $categoryId) use ($productCollection) {
         return $productCollection->contains('product_category', $categoryId);
     });
+    $visibleProducts = $selected_category === ''
+        ? $productCollection
+        : $productCollection->where('product_category', $selected_category);
     $cartItemCount = collect($carts)->sum('quantity');
     $cartIsEmpty = $cartItemCount === 0;
     $lowStockCount = $productCollection->filter(function ($product) {
@@ -684,11 +687,11 @@
             </div>
 
             <div class="pos-category-row">
-                <button type="button" class="pos-pill is-active">
+                <button type="button" class="pos-pill {{ $selected_category === '' ? 'is-active' : '' }}" wire:click="filterByCategory('')">
                     <span>Semua</span>
                 </button>
 
-                @foreach ($categories as $categoryName)
+                @foreach ($categories as $categoryId => $categoryName)
                     @php
                         $categoryNameLower = \Illuminate\Support\Str::lower($categoryName);
                         $pillDotClass = str_contains($categoryNameLower, 'matcha')
@@ -696,7 +699,7 @@
                             : (str_contains($categoryNameLower, 'thai') ? 'is-thai' : '');
                     @endphp
 
-                    <button type="button" class="pos-pill">
+                    <button type="button" class="pos-pill {{ (string) $selected_category === (string) $categoryId ? 'is-active' : '' }}" wire:click="filterByCategory('{{ $categoryId }}')">
                         @if ($pillDotClass)
                             <span class="pos-pill__dot {{ $pillDotClass }}"></span>
                         @endif
@@ -706,7 +709,7 @@
             </div>
 
             <div class="pos-grid">
-                @foreach ($products as $product)
+                @foreach ($visibleProducts as $product)
                     @php
                         $productNameLower = \Illuminate\Support\Str::lower($product->product_name);
                         $tintClass = str_contains($productNameLower, 'matcha')

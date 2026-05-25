@@ -25,6 +25,7 @@ class SellingProduct extends Component
     public $change = 0;
     public $payment_method = '';
     public $last_sale_id = null;
+    public $selected_category = '';
 
     public function mount()
     {
@@ -47,6 +48,11 @@ class SellingProduct extends Component
         } else {
             $this->change = max(0, $this->pay - $this->total);
         }
+    }
+
+    public function filterByCategory($categoryId = '')
+    {
+        $this->selected_category = (string) $categoryId;
     }
 
     public function addToCart($id)

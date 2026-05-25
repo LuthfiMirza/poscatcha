@@ -5,7 +5,7 @@
   <h1>User Data</h1>
   <nav>
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ route('dashboard_admin') }}">Home</a></li>
       <li class="breadcrumb-item active">User Data</li>
     </ol>
   </nav>
@@ -37,7 +37,7 @@
                 <tbody>
                   @foreach ($users as $index => $user)
                     <tr>
-                        <th scope="row"><a href="#">{{ $index + 1 }}</a></th>
+                        <th scope="row">{{ $index + 1 }}</th>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ date('d F Y', strtotime($user->created_at)) }}</td>
