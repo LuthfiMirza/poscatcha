@@ -221,13 +221,28 @@
           $tintClass = str_contains($productNameLower, 'matcha')
               ? 'is-matcha'
               : (str_contains($productNameLower, 'thai') ? 'is-thai' : '');
-          $isLowStock = (int) $product->product_quantity <= 5;
+          $isLowStock = $product->recipes->contains(function ($recipe) {
+              return $recipe->rawMaterial && (float) $recipe->rawMaterial->stock <= (float) $recipe->rawMaterial->minimum_stock;
+          });
+          $canMake = $product->recipes->isNotEmpty()
+              ? $product->recipes->map(function ($recipe) {
+                  if (!$recipe->rawMaterial || (float) $recipe->quantity_required <= 0) {
+                      return 0;
+                  }
+
+                  return floor((float) $recipe->rawMaterial->stock / (float) $recipe->quantity_required);
+              })->min()
+              : 0;
         @endphp
 
         <div class="cashier-list-card">
           <div class="cashier-list-card__media {{ $tintClass }}">
-            @if (!empty($product->product_image))
-              <img src="{{ asset('storage/assets/product/'.$product->product_image)}}" alt="{{ $product->product_name }}" class="cashier-list-card__image">
+            @php
+              $storageImageExists = !empty($product->product_image) && \Illuminate\Support\Facades\Storage::disk('public')->exists('assets/product/' . $product->product_image);
+              $publicImageExists = !empty($product->product_image) && file_exists(public_path('assets/product/' . $product->product_image));
+            @endphp
+            @if ($storageImageExists || $publicImageExists)
+              <img src="{{ $storageImageExists ? asset('storage/assets/product/'.$product->product_image) : asset('assets/product/'.$product->product_image) }}" alt="{{ $product->product_name }}" class="cashier-list-card__image">
             @else
               <div class="cashier-list-card__placeholder">
                 <i class="bi bi-box-seam"></i>
@@ -250,9 +265,9 @@
             <div class="cashier-list-card__detail">
               <span>Product ID : {{$product->product_id }}</span>
               @if ($isLowStock)
-                <span class="is-low-stock">Stock : {{ number_format($product->product_quantity) }} ⚠</span>
+                <span class="is-low-stock">Bahan menipis ⚠</span>
               @else
-                <span>Stock : {{ number_format($product->product_quantity) }}</span>
+                <span>Bisa dibuat ± {{ number_format($canMake) }} cup</span>
               @endif
               <span>Expired: {{ date('d F Y', strtotime($product->product_expired)) }}</span>
             </div>

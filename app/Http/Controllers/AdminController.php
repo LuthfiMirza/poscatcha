@@ -15,6 +15,7 @@ use App\Models\CashierShift;
 use App\Models\DetailSale;
 use App\Models\Product;
 use App\Models\Purchase;
+use App\Models\RawMaterial;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Sale;
@@ -62,10 +63,10 @@ class AdminController extends Controller
         $expiringLimit = $today->copy()->addDays(30);
 
         $todaySales = Sale::query()->whereDate('created_at', $today)->get();
-        $lowStockProducts = Product::query()
-            ->where('product_quantity', '<=', 5)
-            ->orderBy('product_quantity')
-            ->orderBy('product_name')
+        $lowStockMaterials = RawMaterial::query()
+            ->whereColumn('stock', '<=', 'minimum_stock')
+            ->orderBy('stock')
+            ->orderBy('name')
             ->take(5)
             ->get();
         $expiringProducts = Product::query()
@@ -98,7 +99,7 @@ class AdminController extends Controller
         $stats = [
             'total_products' => Product::count(),
             'supplier_count' => Supplier::count(),
-            'low_stock_count' => Product::where('product_quantity', '<=', 5)->count(),
+            'low_stock_count' => RawMaterial::whereColumn('stock', '<=', 'minimum_stock')->count(),
             'expiring_count' => Product::query()
                 ->whereNotNull('product_expired')
                 ->whereDate('product_expired', '>=', $today)
@@ -114,7 +115,7 @@ class AdminController extends Controller
             'categoryProductCounts',
             'cashiers',
             'expiringProducts',
-            'lowStockProducts',
+            'lowStockMaterials',
             'recentPurchases',
             'recentSales',
             'stats'
@@ -124,6 +125,7 @@ class AdminController extends Controller
     public function products_index()
     {
         $products = Product::query()
+            ->withCount('recipes')
             ->orderBy('product_name')
             ->get();
         $categoriesById = Category::query()

@@ -59,7 +59,7 @@
             </div>
             <div class="ps-3">
               <h6>{{ number_format($stats['low_stock_count']) }}</h6>
-              <span class="text-muted small pt-2 ps-1">Produk stok 5 atau kurang</span>
+              <span class="text-muted small pt-2 ps-1">Bahan di bawah stok minimum</span>
             </div>
           </div>
         </div>
@@ -130,6 +130,9 @@
             </a>
             <a href="{{ route('purchases.create') }}" class="btn btn-outline-primary">
               <i class="bi bi-bag-plus me-1"></i> Restock Baru
+            </a>
+            <a href="{{ route('raw-materials.index') }}" class="btn btn-outline-warning">
+              <i class="bi bi-bowl-hot me-1"></i> Bahan Baku
             </a>
             <a href="{{ route('sales_data') }}" class="btn btn-outline-secondary">
               <i class="bi bi-receipt me-1"></i> Lihat Penjualan
@@ -215,28 +218,28 @@
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Low Stock</h5>
-            <a href="{{ route('admin.products.index') }}" class="small">Lihat Produk</a>
+            <h5 class="card-title mb-0">Low Stock Bahan</h5>
+            <a href="{{ route('raw-materials.index') }}" class="small">Lihat Bahan</a>
           </div>
           <div class="table-responsive pt-3">
             <table class="table table-sm align-middle mb-0">
               <thead>
                 <tr>
-                  <th>Produk</th>
+                  <th>Bahan</th>
                   <th>Stok</th>
-                  <th>Harga Jual</th>
+                  <th>Minimum</th>
                 </tr>
               </thead>
               <tbody>
-                @forelse ($lowStockProducts as $product)
+                @forelse ($lowStockMaterials as $material)
                   <tr>
-                    <td>{{ $product->product_name }}</td>
-                    <td><span class="badge bg-warning text-dark">{{ $product->product_quantity }}</span></td>
-                    <td>Rp{{ number_format($product->product_price, 2, ',', '.') }}</td>
+                    <td>{{ $material->name }}</td>
+                    <td><span class="badge bg-warning text-dark">{{ number_format((float) $material->stock, 2, ',', '.') }} {{ $material->unit }}</span></td>
+                    <td>{{ number_format((float) $material->minimum_stock, 2, ',', '.') }} {{ $material->unit }}</td>
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="3" class="text-center text-muted py-4">Tidak ada produk low stock.</td>
+                    <td colspan="3" class="text-center text-muted py-4">Tidak ada bahan low stock.</td>
                   </tr>
                 @endforelse
               </tbody>

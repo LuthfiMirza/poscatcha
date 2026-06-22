@@ -18,7 +18,7 @@ class CashierController extends Controller
     public function list_product()
     {  
         $categories = Category::all();
-        $products = Product::all();
+        $products = Product::with('recipes.rawMaterial')->get();
         return view('cashier.list_product', compact('categories', 'products'));
     }
 

@@ -13,7 +13,9 @@
     $cartItemCount = collect($carts)->sum('quantity');
     $cartIsEmpty = $cartItemCount === 0;
     $lowStockCount = $productCollection->filter(function ($product) {
-        return (int) $product->product_quantity <= 5;
+        return $product->recipes->contains(function ($recipe) {
+            return $recipe->rawMaterial && (float) $recipe->rawMaterial->stock <= (float) $recipe->rawMaterial->minimum_stock;
+        });
     })->count();
     $selectedProductIds = collect($carts)->pluck('product_id')->map(function ($id) {
         return (string) $id;
@@ -715,15 +717,30 @@
                         $tintClass = str_contains($productNameLower, 'matcha')
                             ? 'is-matcha'
                             : (str_contains($productNameLower, 'thai') ? 'is-thai' : '');
-                        $isLowStock = (int) $product->product_quantity <= 5;
+                        $isLowStock = $product->recipes->contains(function ($recipe) {
+                            return $recipe->rawMaterial && (float) $recipe->rawMaterial->stock <= (float) $recipe->rawMaterial->minimum_stock;
+                        });
+                        $canMake = $product->recipes->isNotEmpty()
+                            ? $product->recipes->map(function ($recipe) {
+                                if (!$recipe->rawMaterial || (float) $recipe->quantity_required <= 0) {
+                                    return 0;
+                                }
+
+                                return floor((float) $recipe->rawMaterial->stock / (float) $recipe->quantity_required);
+                            })->min()
+                            : 0;
                         $isSelected = in_array((string) $product->product_id, $selectedProductIds, true);
                     @endphp
 
                     <article class="pos-card {{ $isSelected ? 'is-selected' : '' }}">
                         <div class="pos-card__media">
                             <div class="pos-card__ring {{ $tintClass }}">
-                                @if (!empty($product->product_image))
-                                    <img src="{{ asset('storage/assets/product/' . $product->product_image) }}" alt="{{ $product->product_name }}">
+                                @php
+                                    $storageImageExists = !empty($product->product_image) && \Illuminate\Support\Facades\Storage::disk('public')->exists('assets/product/' . $product->product_image);
+                                    $publicImageExists = !empty($product->product_image) && file_exists(public_path('assets/product/' . $product->product_image));
+                                @endphp
+                                @if ($storageImageExists || $publicImageExists)
+                                    <img src="{{ $storageImageExists ? asset('storage/assets/product/' . $product->product_image) : asset('assets/product/' . $product->product_image) }}" alt="{{ $product->product_name }}">
                                 @else
                                     <div class="pos-card__placeholder">
                                         <i class="bi bi-cup-straw fs-4"></i>
@@ -738,11 +755,11 @@
                         @if ($isLowStock)
                             <div class="pos-card__stock is-low">
                                 <i class="bi bi-exclamation-triangle"></i>
-                                Stok tinggal {{ str_pad((string) $product->product_quantity, 2, '0', STR_PAD_LEFT) }}
+                                Bahan menipis
                             </div>
                         @else
                             <div class="pos-card__stock">
-                                {{ str_pad((string) $product->product_quantity, 2, '0', STR_PAD_LEFT) }} tersedia
+                                Bisa dibuat ± {{ number_format($canMake) }} cup
                             </div>
                         @endif
 
@@ -792,8 +809,12 @@
 
                         <div class="pos-order-item">
                             <div class="pos-order-item__thumb {{ $cartTintClass }}">
-                                @if ($cartProduct && !empty($cartProduct->product_image))
-                                    <img src="{{ asset('storage/assets/product/' . $cartProduct->product_image) }}" alt="{{ $cart->product_name }}">
+                                @php
+                                    $cartStorageImageExists = $cartProduct && !empty($cartProduct->product_image) && \Illuminate\Support\Facades\Storage::disk('public')->exists('assets/product/' . $cartProduct->product_image);
+                                    $cartPublicImageExists = $cartProduct && !empty($cartProduct->product_image) && file_exists(public_path('assets/product/' . $cartProduct->product_image));
+                                @endphp
+                                @if ($cartStorageImageExists || $cartPublicImageExists)
+                                    <img src="{{ $cartStorageImageExists ? asset('storage/assets/product/' . $cartProduct->product_image) : asset('assets/product/' . $cartProduct->product_image) }}" alt="{{ $cart->product_name }}">
                                 @else
                                     <div class="pos-order__placeholder">
                                         <i class="bi bi-cup-hot"></i>

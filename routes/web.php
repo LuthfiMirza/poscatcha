@@ -4,7 +4,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CashierController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ProductRecipeController;
 use App\Http\Controllers\ProfitReportController;
+use App\Http\Controllers\RawMaterialController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +26,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::post('/add_product_admin_process', [AdminController::class, 'add_product_process'])->name('add_product_process');
     Route::get('/edit_product_admin/{id}', [AdminController::class, 'edit_product'])->name('edit_product');
     Route::post('/edit_product_admin_process/{id}', [AdminController::class, 'edit_product_process'])->name('edit_product_process');
+    Route::get('/admin/products/{product}/recipe', [ProductRecipeController::class, 'edit'])->name('admin.products.recipe.edit');
+    Route::post('/admin/products/{product}/recipe', [ProductRecipeController::class, 'update'])->name('admin.products.recipe.update');
     Route::get('/delete_product_admin/{id}', [AdminController::class, 'delete_product'])->name('delete_product');
     Route::post('/delete_product_admin_process/{id}', [AdminController::class, 'delete_product_process'])->name('delete_product_process');
     Route::get('/admin/categories', [AdminController::class, 'categories_index'])->name('admin.categories.index');
@@ -39,6 +43,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/stock_movement', [AdminController::class, 'stock_movements'])->name('stock_movement');
 
     Route::resource('suppliers', SupplierController::class);
+    Route::resource('raw-materials', RawMaterialController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('purchases', PurchaseController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     Route::get('/admin/reports/profit', [ProfitReportController::class, 'index'])->name('reports.profit');
     Route::get('/admin/reports/profit/export/excel', [ProfitReportController::class, 'exportExcel'])->name('reports.profit.export.excel');

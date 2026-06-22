@@ -25,6 +25,13 @@
       </li>
 
       <li class="nav-item">
+        <a class="nav-link {{ request()->routeIs('raw-materials.*', 'admin.products.recipe.*') ? '' : 'collapsed' }}" href="{{ route('raw-materials.index') }}">
+          <i class="bx bx-bowl-hot"></i>
+          <span>Bahan Baku</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link {{ request()->routeIs('suppliers.*') ? '' : 'collapsed' }}" href="{{ route('suppliers.index') }}">
           <i class="bx bx-store-alt"></i>
           <span>Supplier</span>

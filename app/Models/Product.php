@@ -43,6 +43,11 @@ class Product extends Model
         return $this->hasMany(PurchaseItem::class, 'product_id', 'product_id');
     }
 
+    public function recipes(): HasMany
+    {
+        return $this->hasMany(ProductRecipe::class, 'product_id', 'product_id');
+    }
+
     public static function postProduct($product_id, $product_name, $product_category, $product_image, $product_price, $buy_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user)
     {
         return DB::transaction(function () use ($product_id, $product_name, $product_category, $product_image, $product_price, $buy_price, $product_profit, $product_quantity, $product_expired, $transaction_id, $status, $reason, $quantity_before, $user) {

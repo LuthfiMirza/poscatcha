@@ -8,9 +8,10 @@ use Livewire\Component;
 use App\Models\Cart;
 use App\Models\DetailSale;
 use App\Models\Product;
+use App\Models\RawMaterial;
+use App\Models\RawMaterialStockMovement;
 use App\Models\Sale;
 use App\Models\CashierShift;
-use App\Models\StockMovement;
 use Illuminate\Validation\ValidationException;
 
 class SellingProduct extends Component
@@ -31,7 +32,7 @@ class SellingProduct extends Component
     {
         $this->cashier_id = Auth::user()->id;
         $this->cashier_name = Auth::user()->name;
-        $this->products = Product::all();
+        $this->products = Product::with('recipes.rawMaterial')->get();
         $this->refreshCarts(); 
     }
 
@@ -170,18 +171,20 @@ class SellingProduct extends Component
                 ]); 
 
                 foreach ($carts as $cart) {
-                    $product = Product::where('product_id', $cart->product_id)->lockForUpdate()->firstOrFail();
+                    $product = Product::where('product_id', $cart->product_id)
+                        ->with('recipes.rawMaterial')
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    if ($product->recipes->isEmpty()) {
+                        throw ValidationException::withMessages([
+                            'recipe' => 'Produk "' . $cart->product_name . '" belum punya resep bahan baku. Admin perlu mengisi resep dulu.',
+                        ]);
+                    }
+
                     $buyPrice = (float) ($product->buy_price ?? 0);
                     $sellPrice = (float) $cart->product_price;
                     $profitPerItem = ($sellPrice - $buyPrice) * (int) $cart->quantity;
-                    $quantity_before = $product->product_quantity;
-                    $quantity_after = $product->product_quantity - $cart->quantity;
-
-                    if ($quantity_after < 0) {
-                        throw ValidationException::withMessages([
-                            'stock' => 'Stok produk "' . $cart->product_name . '" tidak mencukupi. Sisa stok saat ini: ' . $quantity_before . '.',
-                        ]);
-                    }
 
                     DetailSale::create([
                         'sale_id' => $saleId,
@@ -195,21 +198,32 @@ class SellingProduct extends Component
                         'sub_total' => $cart->sub_total,
                     ]);
 
-                    StockMovement::create([
-                        'product_id' => $cart->product_id,
-                        'transaction_id' => $saleId,
-                        'product_name' => $cart->product_name,
-                        'status' => $status,
-                        'source' => 'sale',
-                        'reason' => $reason,
-                        'cashier_id' => $cart->cashier_id,
-                        'quantity_before' => $quantity_before,
-                        'quantity_after' => $quantity_after,
-                        'action_by' => $this->cashier_name,
-                    ]);
+                    foreach ($product->recipes as $recipe) {
+                        $material = RawMaterial::whereKey($recipe->raw_material_id)->lockForUpdate()->firstOrFail();
+                        $requiredQuantity = (float) $recipe->quantity_required * (int) $cart->quantity;
+                        $quantityBefore = (float) $material->stock;
+                        $quantityAfter = $quantityBefore - $requiredQuantity;
 
-                    $product->product_quantity = $quantity_after;
-                    $product->save();
+                        if ($quantityAfter < 0) {
+                            throw ValidationException::withMessages([
+                                'stock' => 'Stok bahan "' . $material->name . '" tidak cukup untuk ' . $cart->product_name . '. Butuh ' . number_format($requiredQuantity, 2, ',', '.') . ' ' . $material->unit . ', sisa ' . number_format($quantityBefore, 2, ',', '.') . ' ' . $material->unit . '.',
+                            ]);
+                        }
+
+                        $material->stock = $quantityAfter;
+                        $material->save();
+
+                        RawMaterialStockMovement::create([
+                            'raw_material_id' => $material->id,
+                            'transaction_id' => $saleId,
+                            'type' => 'out',
+                            'reason' => $reason . ' - ' . $cart->product_name,
+                            'quantity' => $requiredQuantity,
+                            'quantity_before' => $quantityBefore,
+                            'quantity_after' => $quantityAfter,
+                            'action_by' => $this->cashier_name,
+                        ]);
+                    }
                 }
 
                 Cart::where('cashier_id', $this->cashier_id)->delete();
@@ -217,7 +231,7 @@ class SellingProduct extends Component
                 return $saleId;
             });
         } catch (ValidationException $exception) {
-            session()->flash('error', collect($exception->errors())->flatten()->first() ?? 'Stok produk tidak mencukupi.');
+            session()->flash('error', collect($exception->errors())->flatten()->first() ?? 'Stok bahan tidak mencukupi.');
             $this->refreshCarts();
 
             return;
