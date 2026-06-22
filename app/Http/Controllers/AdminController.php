@@ -16,6 +16,7 @@ use App\Models\DetailSale;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\RawMaterial;
+use App\Models\RawMaterialStockMovement;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Sale;
@@ -433,9 +434,10 @@ class AdminController extends Controller
 
     public function stock_movements(Request $request)
     {
-        $stock_movements = StockMovement::query()
-            ->when($request->filled('source'), function ($query) use ($request) {
-                $query->where('source', $request->source);
+        $stock_movements = RawMaterialStockMovement::query()
+            ->with('rawMaterial')
+            ->when($request->filled('type'), function ($query) use ($request) {
+                $query->where('type', $request->type);
             })
             ->when($request->filled('date_from'), function ($query) use ($request) {
                 $query->whereDate('created_at', '>=', $request->date_from);

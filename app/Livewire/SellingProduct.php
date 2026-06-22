@@ -18,8 +18,6 @@ class SellingProduct extends Component
 {
     public $cashier_id;
     public $cashier_name;
-    public $products;
-    public $carts = [];
     public $quantities = [];
     public $total = 0;
     public $pay = 0;
@@ -32,7 +30,6 @@ class SellingProduct extends Component
     {
         $this->cashier_id = Auth::user()->id;
         $this->cashier_name = Auth::user()->name;
-        $this->products = Product::with('recipes.rawMaterial')->get();
         $this->refreshCarts(); 
     }
 
@@ -58,7 +55,7 @@ class SellingProduct extends Component
 
     public function addToCart($id)
     {
-        $product = Product::find($id);
+        $product = Product::query()->find($id);
 
         if (!$product) return;
 
@@ -245,9 +242,13 @@ class SellingProduct extends Component
 
     public function refreshCarts()
     {
-        $this->carts = Cart::where('cashier_id', $this->cashier_id)->get();
+        $carts = Cart::query()
+            ->where('cashier_id', $this->cashier_id)
+            ->orderBy('id')
+            ->get();
 
-        foreach ($this->carts as $cart) {
+        $this->quantities = [];
+        foreach ($carts as $cart) {
             $this->quantities[$cart->id] = $cart->quantity;
         }
 
@@ -259,6 +260,15 @@ class SellingProduct extends Component
 
     public function render()
     {
-        return view('livewire.selling_product');
+        return view('livewire.selling_product', [
+            'carts' => Cart::query()
+                ->where('cashier_id', $this->cashier_id)
+                ->orderBy('id')
+                ->get(),
+            'products' => Product::query()
+                ->with('recipes.rawMaterial')
+                ->orderBy('product_id')
+                ->get(),
+        ]);
     }
 }

@@ -6,11 +6,11 @@
 
   $defaultItems = $isEdit
       ? $purchase->items->map(fn ($item) => [
-          'product_id' => $item->product_id,
+          'raw_material_id' => $item->raw_material_id,
           'quantity' => $item->quantity,
           'buy_price' => $item->buy_price,
       ])->toArray()
-      : [['product_id' => '', 'quantity' => 1, 'buy_price' => '']];
+      : [['raw_material_id' => '', 'quantity' => 1, 'buy_price' => '']];
 
   $oldItems = old('items', $defaultItems);
 @endphp
@@ -72,7 +72,7 @@
       <div class="card">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
-            <h5 class="card-title">Item Purchase</h5>
+            <h5 class="card-title">Item Restock Bahan Baku</h5>
             <button type="button" class="btn btn-success btn-sm" id="add-item-row">
               <i class="bx bx-plus"></i> Tambah Item
             </button>
@@ -82,9 +82,9 @@
             <table class="table table-bordered align-middle" id="purchase-items-table">
               <thead>
                 <tr>
-                  <th>Produk</th>
+                  <th>Bahan Baku</th>
                   <th width="120">Qty</th>
-                  <th width="180">Harga Beli</th>
+                  <th width="180">Harga Beli / Unit</th>
                   <th width="90">Aksi</th>
                 </tr>
               </thead>
@@ -92,20 +92,20 @@
                 @foreach ($oldItems as $index => $item)
                   <tr>
                     <td>
-                      <select name="items[{{ $index }}][product_id]" class="form-select" required>
-                        <option value="">Pilih Produk</option>
-                        @foreach ($products as $product)
-                          <option value="{{ $product->product_id }}" @selected(($item['product_id'] ?? '') == $product->product_id)>
-                            {{ $product->product_name }} ({{ $product->product_id }})
+                      <select name="items[{{ $index }}][raw_material_id]" class="form-select" required>
+                        <option value="">Pilih Bahan</option>
+                        @foreach ($rawMaterials as $material)
+                          <option value="{{ $material->id }}" @selected(($item['raw_material_id'] ?? '') == $material->id)>
+                            {{ $material->name }} ({{ $material->unit }})
                           </option>
                         @endforeach
                       </select>
                     </td>
                     <td>
-                      <input type="number" name="items[{{ $index }}][quantity]" class="form-control" min="1" value="{{ $item['quantity'] ?? 1 }}" required>
+                      <input type="number" name="items[{{ $index }}][quantity]" class="form-control" min="0.01" step="0.01" value="{{ $item['quantity'] ?? 1 }}" required>
                     </td>
                     <td>
-                      <input type="number" name="items[{{ $index }}][buy_price]" class="form-control" min="1" value="{{ $item['buy_price'] ?? '' }}" required>
+                      <input type="number" name="items[{{ $index }}][buy_price]" class="form-control" min="0" step="0.01" value="{{ $item['buy_price'] ?? '' }}" required>
                     </td>
                     <td>
                       <button type="button" class="btn btn-danger btn-sm remove-item-row">Hapus</button>
@@ -131,9 +131,9 @@
     const addButton = document.getElementById('add-item-row');
     let rowIndex = {{ count($oldItems) }};
 
-    function buildProductOptions() {
-      return `{!! collect($products)->map(function ($product) {
-          return '<option value="' . e($product->product_id) . '">' . e($product->product_name) . ' (' . e($product->product_id) . ')</option>';
+    function buildMaterialOptions() {
+      return `{!! collect($rawMaterials)->map(function ($material) {
+          return '<option value="' . e($material->id) . '">' . e($material->name) . ' (' . e($material->unit) . ')</option>';
       })->implode('') !!}`;
     }
 
@@ -141,16 +141,16 @@
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>
-          <select name="items[${rowIndex}][product_id]" class="form-select" required>
-            <option value="">Pilih Produk</option>
-            ${buildProductOptions()}
+          <select name="items[${rowIndex}][raw_material_id]" class="form-select" required>
+            <option value="">Pilih Bahan</option>
+            ${buildMaterialOptions()}
           </select>
         </td>
         <td>
-          <input type="number" name="items[${rowIndex}][quantity]" class="form-control" min="1" value="1" required>
+          <input type="number" name="items[${rowIndex}][quantity]" class="form-control" min="0.01" step="0.01" value="1" required>
         </td>
         <td>
-          <input type="number" name="items[${rowIndex}][buy_price]" class="form-control" min="1" required>
+          <input type="number" name="items[${rowIndex}][buy_price]" class="form-control" min="0" step="0.01" required>
         </td>
         <td>
           <button type="button" class="btn btn-danger btn-sm remove-item-row">Hapus</button>

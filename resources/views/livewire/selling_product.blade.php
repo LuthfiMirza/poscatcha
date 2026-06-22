@@ -732,7 +732,7 @@
                         $isSelected = in_array((string) $product->product_id, $selectedProductIds, true);
                     @endphp
 
-                    <article class="pos-card {{ $isSelected ? 'is-selected' : '' }}">
+                    <article class="pos-card {{ $isSelected ? 'is-selected' : '' }}" wire:key="product-card-{{ $product->id }}">
                         <div class="pos-card__media">
                             <div class="pos-card__ring {{ $tintClass }}">
                                 @php
@@ -764,8 +764,9 @@
                         @endif
 
                         <div class="pos-card__action">
-                            <button wire:click="addToCart('{{ $product->id }}')" type="button" class="pos-add-btn">
-                                Tambah Item
+                            <button wire:click.prevent="addToCart({{ $product->id }})" wire:loading.attr="disabled" type="button" class="pos-add-btn">
+                                <span wire:loading.remove>Tambah Item</span>
+                                <span wire:loading>Loading...</span>
                             </button>
                         </div>
                     </article>
@@ -807,7 +808,7 @@
                                 : (str_contains($cartNameLower, 'thai') ? 'is-thai' : '');
                         @endphp
 
-                        <div class="pos-order-item">
+                        <div class="pos-order-item" wire:key="cart-item-{{ $cart->id }}">
                             <div class="pos-order-item__thumb {{ $cartTintClass }}">
                                 @php
                                     $cartStorageImageExists = $cartProduct && !empty($cartProduct->product_image) && \Illuminate\Support\Facades\Storage::disk('public')->exists('assets/product/' . $cartProduct->product_image);
@@ -827,7 +828,7 @@
                                 <div class="pos-order-item__note">Rp{{ number_format($cart->product_price) }} per item</div>
 
                                 <div class="pos-order-item__controls">
-                                    <button wire:click="decrementQuantity('{{ $cart->id }}')" type="button" class="pos-qty-btn">-</button>
+                                    <button wire:click.prevent="decrementQuantity({{ $cart->id }})" wire:loading.attr="disabled" type="button" class="pos-qty-btn">-</button>
                                     <input
                                         type="number"
                                         min="1"
@@ -835,8 +836,8 @@
                                         wire:model.lazy="quantities.{{ $cart->id }}"
                                         wire:keydown.enter="updateQuantityManual({{ $cart->id }})"
                                     >
-                                    <button wire:click="incrementQuantity('{{ $cart->id }}')" type="button" class="pos-qty-btn">+</button>
-                                    <button wire:click="removeFromCart('{{ $cart->id }}')" type="button" class="pos-remove-btn">
+                                    <button wire:click.prevent="incrementQuantity({{ $cart->id }})" wire:loading.attr="disabled" type="button" class="pos-qty-btn">+</button>
+                                    <button wire:click.prevent="removeFromCart({{ $cart->id }})" wire:loading.attr="disabled" type="button" class="pos-remove-btn">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </div>
