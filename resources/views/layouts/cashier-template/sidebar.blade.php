@@ -1,9 +1,10 @@
 @php
-  $isPosPage = request()->routeIs('selling_product', 'list_product');
+  $isPosPage = request()->routeIs('selling_product', 'list_product', 'online-orders.*');
   $isShiftNav = request()->routeIs('cashier.shift.open') || request()->is('cashier/shift/open');
   $isCloseNav = request()->routeIs('cashier.shift.close') || request()->is('cashier/shift/close');
   $isMenuNav = request()->routeIs('list_product') || request()->is('list_product*');
   $isCashierNav = request()->routeIs('selling_product') || request()->is('selling_product*');
+  $isOnlineOrderNav = request()->routeIs('online-orders.*');
 @endphp
 
 @if ($isPosPage)
@@ -147,6 +148,16 @@
               <path d="M3.5 5H5.5L7.6 14.25H18.3L20 8.25H8.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
             <span class="cashier-pos-sidebar__label">Cashier</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="cashier-pos-sidebar__link {{ $isOnlineOrderNav ? 'is-active' : '' }}" href="{{ route('online-orders.index') }}">
+            <svg class="cashier-pos-sidebar__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 6.5H19V18.5H5V6.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+              <path d="M8 10H16M8 14H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            </svg>
+            <span class="cashier-pos-sidebar__label">Online</span>
           </a>
         </li>
       </ul>
@@ -296,6 +307,16 @@
             <path d="M3 4H5L7.2 14.25H18.2L20.35 8H8.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
           </svg>
           <span>Selling Product</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="cashier-sidebar-link {{ request()->routeIs('online-orders.*') ? 'is-active' : '' }}" href="{{ route('online-orders.index') }}">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 6.5H19V18.5H5V6.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+            <path d="M8 10H16M8 14H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+          </svg>
+          <span>Pesanan Online</span>
         </a>
       </li>
     </ul>

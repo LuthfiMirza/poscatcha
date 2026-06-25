@@ -22,3 +22,7 @@ yarn-error.log
 /.vscode
 /.zed
 .git-history-backup-*/
+
+.DS_Store
+**/.DS_Store
+database/exports/*.sql

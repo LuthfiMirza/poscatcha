@@ -16,6 +16,7 @@ class UserSeeder extends Seeder
     {
         Role::findOrCreate('admin');
         Role::findOrCreate('cashier');
+        Role::findOrCreate('buyer');
 
         $admin = User::updateOrCreate(
             ['email' => 'admin@gmail.com'],

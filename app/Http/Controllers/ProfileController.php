@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\OnlineOrdering\BuyerCartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,10 +15,22 @@ class ProfileController extends Controller
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): View
+    public function edit(Request $request): View|RedirectResponse
     {
+        if ($request->user()->hasRole('buyer')) {
+            return redirect()->route('buyer.profile.edit');
+        }
+
         return view('profile.edit', [
             'user' => $request->user(),
+        ]);
+    }
+
+    public function editBuyer(Request $request, BuyerCartService $cartService): View
+    {
+        return view('buyer.profile.edit', [
+            'user' => $request->user(),
+            'cartCount' => $cartService->count($request->user()),
         ]);
     }
 

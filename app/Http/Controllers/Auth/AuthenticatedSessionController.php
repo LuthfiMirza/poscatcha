@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\ShiftController;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,12 @@ class AuthenticatedSessionController extends Controller
     {
         return view('auth.login');
     }
-    
+
+    public function createBuyer(): View
+    {
+        return view('auth.buyer-login');
+    }
+
     public function create_admin(): View
     {
         return view('auth.login_admin');
@@ -30,7 +36,45 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        return $this->authenticateAndRedirect($request, 'cashier', 'selling_product');
+        $request->authenticate();
+        $request->session()->regenerate();
+
+        return $this->redirectAfterLogin($request, Auth::user());
+    }
+
+    public function storeBuyer(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+
+        if (! $user->hasRole('buyer')) {
+            return $this->redirectAfterLogin($request, $user);
+        }
+
+        return redirect()->intended(route('buyer.shop.index'));
+    }
+
+    protected function redirectAfterLogin(Request $request, User $user): RedirectResponse
+    {
+        if ($user->hasRole('admin')) {
+            return redirect()->route('dashboard_admin');
+        }
+
+        if ($user->hasRole('cashier')) {
+            if (! ShiftController::activeShiftForCashier($user->id)) {
+                return redirect()->route('cashier.shift.open');
+            }
+
+            return redirect()->route('selling_product');
+        }
+
+        if ($user->hasRole('buyer')) {
+            return redirect()->intended(route('buyer.shop.index'));
+        }
+
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**
@@ -50,9 +94,9 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
-        
+
         if ($user->hasRole($requiredRole)) {
-            if ($requiredRole === 'cashier' && !ShiftController::activeShiftForCashier($user->id)) {
+            if ($requiredRole === 'cashier' && ! ShiftController::activeShiftForCashier($user->id)) {
                 return redirect()->route('cashier.shift.open');
             }
 
@@ -61,8 +105,9 @@ class AuthenticatedSessionController extends Controller
 
         // If user doesn't have the required role, log them out
         $this->performLogout($request);
+
         return redirect('/')->withErrors([
-            'role' => 'You are not authorized to access this area.'
+            'role' => 'You are not authorized to access this area.',
         ]);
     }
 
@@ -72,7 +117,8 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         $this->performLogout($request);
-        return redirect('/');
+
+        return redirect()->route('buyer.shop.index')->with('success', 'Berhasil keluar dari akun.');
     }
 
     /**

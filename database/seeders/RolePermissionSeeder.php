@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -14,30 +13,31 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::create(['name' => 'cashier-dashboard']);
-        Permission::create(['name' => 'sell-products']);
-        Permission::create(['name' => 'delete-selled-products']);
+        Permission::firstOrCreate(['name' => 'cashier-dashboard']);
+        Permission::firstOrCreate(['name' => 'sell-products']);
+        Permission::firstOrCreate(['name' => 'delete-selled-products']);
 
-        Permission::create(['name' => 'add-products']);
-        Permission::create(['name' => 'edit-products']);
-        Permission::create(['name' => 'delete-products']);
-        Permission::create(['name' => 'view-products']);
+        Permission::firstOrCreate(['name' => 'add-products']);
+        Permission::firstOrCreate(['name' => 'edit-products']);
+        Permission::firstOrCreate(['name' => 'delete-products']);
+        Permission::firstOrCreate(['name' => 'view-products']);
 
-        Permission::create(['name' => 'admin-dashboard']);
-        Permission::create(['name' => 'create-cashiers']);
-        Permission::create(['name' => 'edit-cashiers']);
-        Permission::create(['name' => 'delete-cashiers']);
-        Permission::create(['name' => 'view-cashiers']);
+        Permission::firstOrCreate(['name' => 'admin-dashboard']);
+        Permission::firstOrCreate(['name' => 'create-cashiers']);
+        Permission::firstOrCreate(['name' => 'edit-cashiers']);
+        Permission::firstOrCreate(['name' => 'delete-cashiers']);
+        Permission::firstOrCreate(['name' => 'view-cashiers']);
 
-        Role::create(['name' => 'cashier']);
-        Role::create(['name' => 'admin']);
+        Role::firstOrCreate(['name' => 'cashier']);
+        Role::firstOrCreate(['name' => 'admin']);
+        Role::firstOrCreate(['name' => 'buyer']);
 
         $roleAdmin = Role::findByName('admin');
         $roleAdmin->givePermissionTo('admin-dashboard');
         $roleAdmin->givePermissionTo('create-cashiers');
         $roleAdmin->givePermissionTo('edit-cashiers');
         $roleAdmin->givePermissionTo('delete-cashiers');
-        $roleAdmin->givePermissionTo('view-cashiers'); 
+        $roleAdmin->givePermissionTo('view-cashiers');
 
         $roleCashier = Role::findByName('cashier');
         $roleCashier->givePermissionTo('cashier-dashboard');
