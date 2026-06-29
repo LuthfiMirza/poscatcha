@@ -30,6 +30,7 @@
                     <th scope="col">No</th>
                     <th scope="col">Name</th>
                     <th scope="col">Email</th>
+                    <th scope="col">Role</th>
                     <th scope="col">Added</th>
                     <th scope="col">Action</th>
                   </tr>
@@ -40,6 +41,13 @@
                         <th scope="row">{{ $index + 1 }}</th>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
+                        <td>
+                          @forelse ($user->getRoleNames() as $role)
+                            <span class="badge bg-primary text-capitalize">{{ $role }}</span>
+                          @empty
+                            <span class="badge bg-secondary">No Role</span>
+                          @endforelse
+                        </td>
                         <td>{{ date('d F Y', strtotime($user->created_at)) }}</td>
                         <td>
                         <a href="{{ route('edit_user', $user->id)}}" class="btn badge bg-warning">Edit</a>
