@@ -7,6 +7,7 @@ use App\Models\CashierShift;
 use App\Models\Category;
 use App\Models\DetailSale;
 use App\Models\Product;
+use App\Models\RawMaterial;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\User;
@@ -181,13 +182,27 @@ class AdminChatbotService
 
     protected function handleStockCheck(array $parsed): array
     {
-        $productLookup = $this->resolveProductLookup($parsed['parameters']);
+        $stockTarget = $parsed['parameters']['stock_target'] ?? 'raw_material';
 
-        if ($productLookup['status'] === 'multiple') {
-            return $this->productCandidatesResponse('cek_stok_produk', $parsed['parameters'], $productLookup['candidates']);
+        if (empty($parsed['parameters']['product_id']) && empty($parsed['parameters']['product_query'])) {
+            if ($stockTarget === 'raw_material') {
+                return $this->rawMaterialStockListResponse($parsed['parameters']);
+            }
+
+            return $this->productStockListResponse($parsed['parameters']);
         }
 
-        if ($productLookup['status'] === 'none') {
+        if ($stockTarget === 'product') {
+            $productLookup = $this->resolveProductLookup($parsed['parameters']);
+
+            if ($productLookup['status'] === 'single') {
+                return $this->productStockResponse($parsed['parameters'], $productLookup['product']);
+            }
+
+            if ($productLookup['status'] === 'multiple') {
+                return $this->productCandidatesResponse('cek_stok_produk', $parsed['parameters'], $productLookup['candidates']);
+            }
+
             return [
                 'success' => false,
                 'intent' => 'cek_stok_produk',
@@ -200,12 +215,101 @@ class AdminChatbotService
             ];
         }
 
-        $product = $productLookup['product'];
+        $rawMaterialLookup = $this->resolveRawMaterialLookup($parsed['parameters']);
 
+        if ($rawMaterialLookup['status'] === 'single') {
+            return $this->rawMaterialStockResponse($parsed['parameters'], $rawMaterialLookup['raw_material']);
+        }
+
+        if ($rawMaterialLookup['status'] === 'multiple') {
+            return $this->rawMaterialCandidatesResponse('cek_stok_produk', $parsed['parameters'], $rawMaterialLookup['candidates']);
+        }
+
+        $productLookup = $this->resolveProductLookup($parsed['parameters']);
+
+        if ($productLookup['status'] === 'single') {
+            return $this->productStockResponse(
+                $parsed['parameters'],
+                $productLookup['product'],
+                'Bahan yang Anda tanyakan tidak ditemukan. Saya menemukan produk yang cocok: '
+            );
+        }
+
+        if ($productLookup['status'] === 'multiple') {
+            $response = $this->productCandidatesResponse('cek_stok_produk', $parsed['parameters'], $productLookup['candidates']);
+            $response['message'] = 'Bahan yang Anda tanyakan tidak ditemukan. ' . $response['message'] . ' Jika ingin cek menu/produk, gunakan format "cek stok produk nama".';
+
+            return $response;
+        }
+
+        return [
+            'success' => false,
+            'intent' => 'cek_stok_produk',
+            'parameters' => $parsed['parameters'],
+            'data' => null,
+            'message' => 'Bahan yang Anda tanyakan tidak ditemukan. Jika ingin cek menu/produk, gunakan format "cek stok produk nama".',
+            'actions' => [
+                $this->makeAction('Restock', 'purchases.create'),
+                $this->makeAction('Lihat Produk', 'admin.products.index'),
+            ],
+        ];
+    }
+
+    protected function productStockListResponse(array $parameters): array
+    {
+            $products = Product::query()
+                ->select('product_id', 'product_name', 'product_quantity')
+                ->orderBy('product_name')
+                ->limit(10)
+                ->get();
+
+            if ($products->isEmpty()) {
+                return [
+                    'success' => false,
+                    'intent' => 'cek_stok_produk',
+                    'parameters' => $parameters,
+                    'data' => null,
+                    'message' => 'Belum ada data produk untuk dicek stoknya.',
+                    'actions' => [
+                        $this->makeAction('Lihat Produk', 'admin.products.index'),
+                    ],
+                ];
+            }
+
+            $lines = $products->map(function ($product, $index) {
+                return sprintf(
+                    '%d. %s (%s) - stok %s unit',
+                    $index + 1,
+                    $product->product_name,
+                    $product->product_id,
+                    $this->formatNumber($product->product_quantity)
+                );
+            })->implode('; ');
+
+            return [
+                'success' => true,
+                'intent' => 'cek_stok_produk',
+                'parameters' => $parameters,
+                'data' => [
+                    'products' => $products->map(fn ($product) => [
+                        'product_id' => $product->product_id,
+                        'product_name' => $product->product_name,
+                        'product_quantity' => $product->product_quantity,
+                    ])->toArray(),
+                ],
+                'message' => 'Daftar stok produk: ' . $lines . '.',
+                'actions' => [
+                    $this->makeAction('Lihat Produk', 'admin.products.index'),
+                ],
+            ];
+    }
+
+    protected function productStockResponse(array $parameters, Product $product, string $messagePrefix = ''): array
+    {
         return [
             'success' => true,
             'intent' => 'cek_stok_produk',
-            'parameters' => $parsed['parameters'],
+            'parameters' => $parameters,
             'data' => [
                 'product_id' => $product->product_id,
                 'product_name' => $product->product_name,
@@ -214,8 +318,8 @@ class AdminChatbotService
                 'product_profit' => $product->product_profit,
                 'product_expired' => $product->product_expired,
             ],
-            'message' => sprintf(
-                'Stok %s (%s) saat ini %s unit. Harga jual %s, profit %s, expired %s.',
+            'message' => $messagePrefix . sprintf(
+                'Stok produk %s (%s) saat ini %s unit. Harga jual %s, profit %s, expired %s.',
                 $product->product_name,
                 $product->product_id,
                 $this->formatNumber($product->product_quantity),
@@ -225,6 +329,86 @@ class AdminChatbotService
             ),
             'actions' => [
                 $this->makeAction('Lihat Produk', 'admin.products.index'),
+                $this->makeAction('Lihat Stock Movement', 'stock_movement'),
+                $this->makeAction('Restock', 'purchases.create'),
+            ],
+        ];
+    }
+
+    protected function rawMaterialStockListResponse(array $parameters): array
+    {
+        $materials = RawMaterial::query()
+            ->select('id', 'name', 'stock', 'unit', 'minimum_stock')
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+
+        if ($materials->isEmpty()) {
+            return [
+                'success' => false,
+                'intent' => 'cek_stok_produk',
+                'parameters' => $parameters,
+                'data' => null,
+                'message' => 'Belum ada data bahan baku untuk dicek stoknya.',
+                'actions' => [
+                    $this->makeAction('Restock', 'purchases.create'),
+                ],
+            ];
+        }
+
+        $lines = $materials->map(function ($material, $index) {
+            return sprintf(
+                '%d. %s - stok %s %s',
+                $index + 1,
+                $material->name,
+                $this->formatNumber($material->stock),
+                $material->unit
+            );
+        })->implode('; ');
+
+        return [
+            'success' => true,
+            'intent' => 'cek_stok_produk',
+            'parameters' => $parameters,
+            'data' => [
+                'raw_materials' => $materials->map(fn ($material) => [
+                    'raw_material_id' => $material->id,
+                    'raw_material_name' => $material->name,
+                    'stock' => $material->stock,
+                    'unit' => $material->unit,
+                    'minimum_stock' => $material->minimum_stock,
+                ])->toArray(),
+            ],
+            'message' => 'Daftar stok bahan baku: ' . $lines . '.',
+            'actions' => [
+                $this->makeAction('Restock', 'purchases.create'),
+                $this->makeAction('Lihat Stock Movement', 'stock_movement'),
+            ],
+        ];
+    }
+
+    protected function rawMaterialStockResponse(array $parameters, RawMaterial $material): array
+    {
+        return [
+            'success' => true,
+            'intent' => 'cek_stok_produk',
+            'parameters' => $parameters,
+            'data' => [
+                'raw_material_id' => $material->id,
+                'raw_material_name' => $material->name,
+                'stock' => $material->stock,
+                'unit' => $material->unit,
+                'minimum_stock' => $material->minimum_stock,
+            ],
+            'message' => sprintf(
+                'Stok bahan %s saat ini %s %s. Minimum stok %s %s.',
+                $material->name,
+                $this->formatNumber($material->stock),
+                $material->unit,
+                $this->formatNumber($material->minimum_stock),
+                $material->unit
+            ),
+            'actions' => [
                 $this->makeAction('Lihat Stock Movement', 'stock_movement'),
                 $this->makeAction('Restock', 'purchases.create'),
             ],
@@ -1548,6 +1732,68 @@ class AdminChatbotService
         return ['status' => 'none', 'product' => null, 'candidates' => []];
     }
 
+    protected function resolveRawMaterialLookup(array $parameters): array
+    {
+        $materialQuery = trim((string) ($parameters['product_query'] ?? ''));
+
+        if ($materialQuery === '') {
+            return ['status' => 'none', 'raw_material' => null, 'candidates' => []];
+        }
+
+        $normalized = mb_strtolower($materialQuery);
+
+        $exactCandidates = RawMaterial::query()
+            ->whereRaw('LOWER(name) = ?', [$normalized])
+            ->orderBy('name')
+            ->get();
+
+        if ($exactCandidates->count() === 1) {
+            return ['status' => 'single', 'raw_material' => $exactCandidates->first(), 'candidates' => []];
+        }
+
+        if ($exactCandidates->count() > 1) {
+            return ['status' => 'multiple', 'raw_material' => null, 'candidates' => $exactCandidates];
+        }
+
+        $partialCandidates = RawMaterial::query()
+            ->whereRaw('LOWER(name) LIKE ?', ['%' . $normalized . '%'])
+            ->orderByRaw('CASE WHEN LOWER(name) LIKE ? THEN 0 ELSE 1 END', [$normalized . '%'])
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+
+        if ($partialCandidates->count() === 1) {
+            return ['status' => 'single', 'raw_material' => $partialCandidates->first(), 'candidates' => []];
+        }
+
+        if ($partialCandidates->count() > 1) {
+            return ['status' => 'multiple', 'raw_material' => null, 'candidates' => $partialCandidates];
+        }
+
+        $fuzzyCandidates = RawMaterial::query()
+            ->get(['id', 'name', 'stock', 'unit', 'minimum_stock'])
+            ->map(function ($material) use ($normalized) {
+                return [
+                    'score' => $this->similarityScore($normalized, mb_strtolower($material->name)),
+                    'raw_material' => $material,
+                ];
+            })
+            ->filter(fn ($row) => $row['score'] >= 55)
+            ->sortByDesc('score')
+            ->take(5)
+            ->pluck('raw_material');
+
+        if ($fuzzyCandidates->count() === 1) {
+            return ['status' => 'single', 'raw_material' => $fuzzyCandidates->first(), 'candidates' => []];
+        }
+
+        if ($fuzzyCandidates->count() > 1) {
+            return ['status' => 'multiple', 'raw_material' => null, 'candidates' => new Collection($fuzzyCandidates->all())];
+        }
+
+        return ['status' => 'none', 'raw_material' => null, 'candidates' => []];
+    }
+
     protected function resolveCashierLookup(array $parameters): array
     {
         $cashierQuery = trim((string) ($parameters['cashier_query'] ?? ''));
@@ -1636,6 +1882,38 @@ class AdminChatbotService
             'message' => 'Saya menemukan beberapa produk yang mirip. Mohon pilih yang lebih spesifik: ' . $candidateList . '.',
             'actions' => [
                 $this->makeAction('Lihat Produk', 'admin.products.index'),
+            ],
+        ];
+    }
+
+    protected function rawMaterialCandidatesResponse(string $intent, array $parameters, Collection $candidates): array
+    {
+        $candidateList = $candidates->map(function ($material, $index) {
+            return sprintf(
+                '%d. %s - stok %s %s',
+                $index + 1,
+                $material->name,
+                $this->formatNumber($material->stock),
+                $material->unit
+            );
+        })->implode('; ');
+
+        return [
+            'success' => false,
+            'intent' => $intent,
+            'parameters' => $parameters,
+            'data' => [
+                'candidates' => $candidates->map(fn ($material) => [
+                    'raw_material_id' => $material->id,
+                    'raw_material_name' => $material->name,
+                    'stock' => $material->stock,
+                    'unit' => $material->unit,
+                ])->toArray(),
+            ],
+            'message' => 'Saya menemukan beberapa bahan yang mirip. Mohon pilih yang lebih spesifik: ' . $candidateList . '.',
+            'actions' => [
+                $this->makeAction('Restock', 'purchases.create'),
+                $this->makeAction('Lihat Stock Movement', 'stock_movement'),
             ],
         ];
     }
