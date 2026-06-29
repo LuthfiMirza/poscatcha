@@ -35,7 +35,7 @@ class PaymentMethod
 
     public static function onlineValues(): array
     {
-        return array_keys(self::SALES_MAP);
+        return [self::CASH, self::QRIS];
     }
 
     public static function toSales(string $paymentMethod): string

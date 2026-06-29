@@ -252,7 +252,7 @@ class OnlineOrderingFlowTest extends TestCase
         ]);
 
         app(BuyerCartService::class)->add($buyer, $product, 2);
-        $order = app(OrderCheckoutService::class)->checkout($buyer, PaymentMethod::TRANSFER, 'catatan');
+        $order = app(OrderCheckoutService::class)->checkout($buyer, PaymentMethod::QRIS, 'catatan');
 
         $this->assertSame('waiting_verification', $order->payment_status);
         $this->assertSame('pickup', $order->fulfillment_type);
@@ -262,6 +262,15 @@ class OnlineOrderingFlowTest extends TestCase
 
         $this->expectException(ValidationException::class);
         app(OrderCheckoutService::class)->checkout($buyer, PaymentMethod::CASH);
+    }
+
+    public function test_online_checkout_rejects_transfer_payment_method(): void
+    {
+        $buyer = User::factory()->create();
+        $buyer->assignRole('buyer');
+
+        $this->expectException(ValidationException::class);
+        app(OrderCheckoutService::class)->checkout($buyer, PaymentMethod::TRANSFER);
     }
 
     public function test_checkout_rolls_back_when_one_item_has_insufficient_stock(): void

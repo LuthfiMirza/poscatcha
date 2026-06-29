@@ -148,7 +148,7 @@ class ShopController extends Controller
     public function checkout(Request $request, OrderCheckoutService $checkoutService): RedirectResponse
     {
         $validated = $request->validate([
-            'payment_method' => ['required', 'in:cash,transfer,qris'],
+            'payment_method' => ['required', 'in:cash,qris'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 

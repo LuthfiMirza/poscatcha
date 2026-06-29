@@ -3,12 +3,11 @@
 @section('content')
 @php
     $total = 0;
-    $selectedPayment = old('payment_method', 'cash');
     $paymentMethods = [
         'cash' => ['label' => 'Cash saat pickup', 'description' => 'Bayar langsung di kasir saat pesanan diambil.', 'icon' => '💵'],
-        'transfer' => ['label' => 'Transfer manual', 'description' => 'Ikuti instruksi transfer dari kasir setelah order dibuat.', 'icon' => '🏦'],
         'qris' => ['label' => 'QRIS manual', 'description' => 'Bayar dengan QRIS saat pickup atau sesuai arahan kasir.', 'icon' => '▦'],
     ];
+    $selectedPayment = array_key_exists(old('payment_method', 'cash'), $paymentMethods) ? old('payment_method', 'cash') : 'cash';
 @endphp
 
 <section class="space-y-5">
@@ -79,6 +78,49 @@
                         </label>
                     @endforeach
                 </div>
+
+                <div x-show="paymentMethod === 'cash'" x-cloak class="mt-3 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                    <p class="text-sm font-black text-stone-950">Pembayaran cash saat pickup</p>
+                    <p class="mt-1 text-xs leading-5 text-stone-500">Pesanan dibuat terlebih dahulu, lalu pembayaran dilakukan langsung di kasir saat pesanan diambil.</p>
+                </div>
+
+                <div x-show="paymentMethod === 'qris'" x-cloak class="mt-3 rounded-3xl border border-orange-200 bg-orange-50 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-black text-stone-950">QRIS manual</p>
+                            <p class="mt-1 text-xs leading-5 text-stone-600">Tunjukkan bukti pembayaran kepada kasir saat pickup atau ikuti arahan kasir.</p>
+                        </div>
+                        <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-orange-700 shadow-sm">Pickup</span>
+                    </div>
+
+                    <div class="mt-4 rounded-2xl bg-white p-4 text-center shadow-sm ring-1 ring-orange-100">
+                        <a href="{{ asset('assets/payment/qris-catcha.jpg') }}" target="_blank" rel="noopener" class="block">
+                            <img
+                                src="{{ asset('assets/payment/qris-catcha.jpg') }}"
+                                alt="QRIS CATcha"
+                                class="mx-auto h-72 w-full max-w-56 rounded-2xl bg-white object-contain p-2 ring-1 ring-stone-200"
+                            >
+                        </a>
+                        <p class="mt-2 text-xs font-semibold text-stone-500">Ketuk gambar QRIS untuk membuka ukuran penuh.</p>
+                        <p class="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-stone-500">Nominal pembayaran</p>
+                        <p class="mt-1 text-2xl font-black text-orange-700">Rp{{ number_format($total, 0, ',', '.') }}</p>
+                        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                            <a
+                                href="{{ asset('assets/payment/qris-catcha.jpg') }}"
+                                download="qris-catcha.jpg"
+                                class="inline-flex min-h-11 items-center justify-center rounded-2xl bg-orange-700 px-4 text-sm font-black text-white transition hover:bg-orange-800"
+                            >Download QRIS</a>
+                            <a
+                                href="{{ asset('assets/payment/qris-catcha.jpg') }}"
+                                target="_blank"
+                                rel="noopener"
+                                class="inline-flex min-h-11 items-center justify-center rounded-2xl border border-orange-700 px-4 text-sm font-black text-orange-700 transition hover:bg-orange-50"
+                            >Buka QRIS</a>
+                        </div>
+                        <p class="mt-3 rounded-2xl bg-stone-50 px-3 py-2 text-xs font-semibold leading-5 text-stone-600">Jika pakai 1 HP, download QRIS lalu buka aplikasi pembayaran dan pilih scan dari galeri/upload gambar.</p>
+                    </div>
+                </div>
+
                 @error('payment_method')
                     <p class="mt-2 rounded-2xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{{ $message }}</p>
                 @enderror
