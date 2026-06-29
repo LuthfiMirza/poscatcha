@@ -1437,7 +1437,24 @@ class AdminChatbotService
 
         $salesDiff = $current['total_sales'] - $comparison['total_sales'];
         $transactionDiff = $current['transaction_count'] - $comparison['transaction_count'];
-        $direction = $salesDiff >= 0 ? 'naik' : 'turun';
+        $currentAov = $this->averagePerTransaction($current['total_sales'], $current['transaction_count']);
+        $comparisonAov = $this->averagePerTransaction($comparison['total_sales'], $comparison['transaction_count']);
+        $aovDiff = $currentAov - $comparisonAov;
+        $salesChangePercent = $this->percentageChange($current['total_sales'], $comparison['total_sales']);
+        $transactionChangePercent = $this->percentageChange($current['transaction_count'], $comparison['transaction_count']);
+        $direction = $this->comparisonDirection($salesDiff);
+        $insight = $this->salesComparisonInsight($current, $comparison, $salesDiff, $transactionDiff, $aovDiff);
+        $recommendation = $this->salesComparisonRecommendation($current, $comparison, $salesDiff, $transactionDiff, $aovDiff);
+        $periodSummary = sprintf(
+            'Periode: %s (%s) vs %s (%s).',
+            ucfirst($currentWindow['label']),
+            $this->formatWindowRange($currentWindow),
+            $comparisonWindow['label'],
+            $this->formatWindowRange($comparisonWindow)
+        );
+        $headline = $salesChangePercent === null
+            ? sprintf('Penjualan %s dibanding %s %s %s.', $currentWindow['label'], $comparisonWindow['label'], $direction, $this->formatRupiah(abs($salesDiff)))
+            : sprintf('Penjualan %s dibanding %s %s %s (%s).', $currentWindow['label'], $comparisonWindow['label'], $direction, $this->formatRupiah(abs($salesDiff)), $this->formatPercent(abs($salesChangePercent)));
 
         return [
             'success' => true,
@@ -1448,20 +1465,39 @@ class AdminChatbotService
                 'comparison' => $comparison,
                 'sales_diff' => $salesDiff,
                 'transaction_diff' => $transactionDiff,
+                'average_order_value' => [
+                    'current' => $currentAov,
+                    'comparison' => $comparisonAov,
+                    'diff' => $aovDiff,
+                ],
+                'change_percent' => [
+                    'sales' => $salesChangePercent,
+                    'transactions' => $transactionChangePercent,
+                ],
+                'insight' => $insight,
+                'recommendation' => $recommendation,
             ],
-            'message' => sprintf(
-                'Penjualan %s dibanding %s %s %s. Omzet %s vs %s, selisih %s. Transaksi %s vs %s, selisih %s.',
-                $currentWindow['label'],
-                $comparisonWindow['label'],
-                $direction,
-                $this->formatRupiah(abs($salesDiff)),
-                $this->formatRupiah($current['total_sales']),
-                $this->formatRupiah($comparison['total_sales']),
-                $this->formatRupiah($salesDiff),
-                $this->formatNumber($current['transaction_count']),
-                $this->formatNumber($comparison['transaction_count']),
-                $this->formatNumber($transactionDiff)
-            ),
+            'message' => implode(' ', [
+                $headline,
+                $periodSummary,
+                sprintf(
+                    'Ringkasan: omzet %s vs %s, transaksi %s vs %s, rata-rata/transaksi %s vs %s.',
+                    $this->formatRupiah($current['total_sales']),
+                    $this->formatRupiah($comparison['total_sales']),
+                    $this->formatNumber($current['transaction_count']),
+                    $this->formatNumber($comparison['transaction_count']),
+                    $this->formatRupiah($currentAov),
+                    $this->formatRupiah($comparisonAov)
+                ),
+                sprintf(
+                    'Selisih: omzet %s, transaksi %s, rata-rata/transaksi %s.',
+                    $this->formatSignedRupiah($salesDiff),
+                    $this->formatSignedNumber($transactionDiff),
+                    $this->formatSignedRupiah($aovDiff)
+                ),
+                'Insight: ' . $insight,
+                'Saran: ' . $recommendation,
+            ]),
             'actions' => [
                 $this->makeAction('Lihat Penjualan', 'sales_data'),
                 $this->makeAction('Laporan Profit', 'reports.profit'),
@@ -2277,6 +2313,125 @@ class AdminChatbotService
             '3' => 'QRIS',
             default => 'Lainnya',
         };
+    }
+
+    protected function averagePerTransaction(int|float $totalSales, int $transactionCount): int
+    {
+        if ($transactionCount <= 0) {
+            return 0;
+        }
+
+        return (int) round($totalSales / $transactionCount);
+    }
+
+    protected function percentageChange(int|float $current, int|float $comparison): ?float
+    {
+        if ((float) $comparison === 0.0) {
+            return (float) $current === 0.0 ? 0.0 : null;
+        }
+
+        return (($current - $comparison) / abs($comparison)) * 100;
+    }
+
+    protected function comparisonDirection(int|float $diff): string
+    {
+        if ($diff > 0) {
+            return 'naik';
+        }
+
+        if ($diff < 0) {
+            return 'turun';
+        }
+
+        return 'tetap';
+    }
+
+    protected function salesComparisonInsight(array $current, array $comparison, int|float $salesDiff, int $transactionDiff, int|float $aovDiff): string
+    {
+        if ($current['transaction_count'] === 0 && $comparison['transaction_count'] > 0) {
+            return 'Belum ada transaksi tercatat pada periode ini, sehingga omzet turun penuh dibanding periode pembanding.';
+        }
+
+        if ($current['transaction_count'] === 0 && $comparison['transaction_count'] === 0) {
+            return 'Kedua periode belum memiliki transaksi, jadi belum ada performa penjualan yang bisa dibandingkan.';
+        }
+
+        if ($salesDiff > 0 && $transactionDiff > 0) {
+            return 'Kenaikan omzet terutama didorong oleh bertambahnya jumlah transaksi.';
+        }
+
+        if ($salesDiff > 0 && $transactionDiff <= 0 && $aovDiff > 0) {
+            return 'Omzet naik walaupun transaksi tidak bertambah, artinya nilai rata-rata belanja per transaksi meningkat.';
+        }
+
+        if ($salesDiff < 0 && $transactionDiff < 0) {
+            return 'Penurunan omzet terutama dipengaruhi oleh jumlah transaksi yang lebih sedikit.';
+        }
+
+        if ($salesDiff < 0 && $transactionDiff >= 0 && $aovDiff < 0) {
+            return 'Transaksi tidak turun, tetapi rata-rata belanja per transaksi menurun sehingga omzet ikut turun.';
+        }
+
+        if ($salesDiff === 0 && $transactionDiff === 0) {
+            return 'Omzet dan jumlah transaksi relatif stabil dibanding periode pembanding.';
+        }
+
+        return 'Perubahan omzet dipengaruhi kombinasi jumlah transaksi dan nilai rata-rata belanja per transaksi.';
+    }
+
+    protected function salesComparisonRecommendation(array $current, array $comparison, int|float $salesDiff, int $transactionDiff, int|float $aovDiff): string
+    {
+        if ($current['transaction_count'] === 0) {
+            return 'Pastikan transaksi periode ini sudah masuk, cek shift kasir aktif, lalu lihat produk terlaris periode pembanding untuk bahan promo.';
+        }
+
+        if ($salesDiff < 0 && $transactionDiff < 0) {
+            return 'Cek jam ramai dan produk terlaris periode pembanding, lalu dorong promo atau bundling untuk menaikkan jumlah transaksi.';
+        }
+
+        if ($salesDiff < 0 && $aovDiff < 0) {
+            return 'Evaluasi menu dengan nilai transaksi rendah dan coba upsell add-on atau paket agar rata-rata belanja naik.';
+        }
+
+        if ($salesDiff > 0) {
+            return 'Pertahankan pola penjualan yang berhasil dan pastikan stok bahan untuk produk terlaris tetap aman.';
+        }
+
+        return 'Pantau produk terlaris dan shift kasir agar peluang peningkatan omzet periode berikutnya lebih jelas.';
+    }
+
+    protected function formatWindowRange(array $window): string
+    {
+        if (empty($window['start']) || empty($window['end'])) {
+            return '-';
+        }
+
+        return Carbon::parse($window['start'])->locale('id')->translatedFormat('d M Y')
+            . ' - '
+            . Carbon::parse($window['end'])->locale('id')->translatedFormat('d M Y');
+    }
+
+    protected function formatSignedRupiah(int|float $amount): string
+    {
+        if ($amount === 0 || $amount === 0.0) {
+            return 'Rp0';
+        }
+
+        return ($amount > 0 ? '+' : '-') . $this->formatRupiah(abs($amount));
+    }
+
+    protected function formatSignedNumber(int|float $value): string
+    {
+        if ($value === 0 || $value === 0.0) {
+            return '0';
+        }
+
+        return ($value > 0 ? '+' : '-') . $this->formatNumber(abs($value));
+    }
+
+    protected function formatPercent(int|float $value): string
+    {
+        return number_format((float) $value, 1, ',', '.') . '%';
     }
 
     protected function formatRupiah(int|float|string|null $amount): string

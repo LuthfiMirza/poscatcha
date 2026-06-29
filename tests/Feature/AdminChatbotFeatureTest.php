@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\AdminChatbotLog;
+use App\Models\DetailSale;
 use App\Models\Product;
+use App\Models\RawMaterial;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Services\AdminChatbotService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -111,6 +114,105 @@ class AdminChatbotFeatureTest extends TestCase
             'id' => $response['log_id'],
             'feedback' => 'helpful',
         ]);
+    }
+
+    public function test_chatbot_stock_check_can_find_raw_material(): void
+    {
+        $admin = $this->makeAdminUser();
+
+        RawMaterial::query()->create([
+            'name' => 'Es Batu',
+            'unit' => 'kg',
+            'stock' => 12.5,
+            'minimum_stock' => 3,
+        ]);
+
+        $response = app(AdminChatbotService::class)->handle('cek stok Es Batu', [], $admin->id, 'feature-material');
+
+        $this->assertTrue($response['success']);
+        $this->assertSame('cek_stok_produk', $response['intent']);
+        $this->assertSame('Es Batu', $response['data']['raw_material_name']);
+        $this->assertStringContainsString('Stok bahan Es Batu', $response['message']);
+    }
+
+    public function test_stock_check_defaults_to_raw_material_and_product_keyword_forces_product(): void
+    {
+        $admin = $this->makeAdminUser();
+
+        RawMaterial::query()->create([
+            'name' => 'Milk',
+            'unit' => 'liter',
+            'stock' => 6,
+            'minimum_stock' => 2,
+        ]);
+
+        Product::query()->create([
+            'product_id' => 'M001',
+            'product_name' => 'Signature Milk Cold Whisk',
+            'product_category' => 'CAT01',
+            'product_image' => 'milk.jpg',
+            'product_price' => 22000,
+            'buy_price' => 12000,
+            'product_profit' => 10000,
+            'product_quantity' => 9,
+            'product_expired' => '2026-12-31',
+        ]);
+
+        $materialResponse = app(AdminChatbotService::class)->handle('cek stok milk', [], $admin->id, 'feature-stock-target');
+        $productResponse = app(AdminChatbotService::class)->handle('cek stok produk milk', [], $admin->id, 'feature-stock-target');
+
+        $this->assertTrue($materialResponse['success']);
+        $this->assertSame('Milk', $materialResponse['data']['raw_material_name']);
+        $this->assertStringContainsString('Stok bahan Milk', $materialResponse['message']);
+
+        $this->assertTrue($productResponse['success']);
+        $this->assertSame('M001', $productResponse['data']['product_id']);
+        $this->assertStringContainsString('Stok produk Signature Milk Cold Whisk', $productResponse['message']);
+    }
+
+    public function test_sales_comparison_includes_insight_and_recommendation(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-06-29 12:00:00'));
+
+        $admin = $this->makeAdminUser();
+
+        DB::table('sales')->insert([
+            'sale_id' => 'INV-OLD-1',
+            'cashier_id' => (string) $admin->id,
+            'total' => 342000,
+            'payment_method' => '1',
+            'pay' => 342000,
+            'change' => 0,
+            'created_at' => Carbon::parse('2026-06-24 10:00:00'),
+            'updated_at' => Carbon::parse('2026-06-24 10:00:00'),
+        ]);
+
+        DetailSale::query()->create([
+            'sale_id' => 'INV-OLD-1',
+            'cashier_id' => (string) $admin->id,
+            'product_id' => 'P1001',
+            'product_name' => 'Gula Aren',
+            'product_price' => 171000,
+            'buy_price' => 100000,
+            'product_profit' => 71000,
+            'quantity' => 2,
+            'sub_total' => 342000,
+            'created_at' => Carbon::parse('2026-06-24 10:00:00'),
+            'updated_at' => Carbon::parse('2026-06-24 10:00:00'),
+        ]);
+
+        $response = app(AdminChatbotService::class)->handle('Penjualan minggu ini dibanding minggu lalu', [], $admin->id, 'feature-sales-comparison');
+
+        $this->assertTrue($response['success']);
+        $this->assertSame('perbandingan_penjualan', $response['intent']);
+        $this->assertSame(-342000, $response['data']['sales_diff']);
+        $this->assertSame(0, $response['data']['average_order_value']['current']);
+        $this->assertStringContainsString('Periode:', $response['message']);
+        $this->assertStringContainsString('rata-rata/transaksi', $response['message']);
+        $this->assertStringContainsString('Insight:', $response['message']);
+        $this->assertStringContainsString('Saran:', $response['message']);
+
+        Carbon::setTestNow();
     }
 
     protected function makeAdminUser(): User
@@ -241,6 +343,15 @@ class AdminChatbotFeatureTest extends TestCase
             $table->integer('quantity_before');
             $table->integer('quantity_after');
             $table->string('action_by', 40);
+            $table->timestamps();
+        });
+
+        Schema::create('raw_materials', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('unit', 20);
+            $table->decimal('stock', 12, 2)->default(0);
+            $table->decimal('minimum_stock', 12, 2)->default(0);
             $table->timestamps();
         });
 
