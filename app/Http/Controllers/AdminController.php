@@ -453,7 +453,7 @@ class AdminController extends Controller
 
     public function user_data()
     {
-        $users = User::where('id', '!=', 1)->get();
+        $users = User::with('roles')->where('id', '!=', 1)->get();
         return view('admin.user_data', compact('users'));
     }
 

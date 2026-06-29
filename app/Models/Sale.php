@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Carbon;
+use App\Support\PaymentMethod;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 
 class Sale extends Model
 {
@@ -13,6 +14,8 @@ class Sale extends Model
 
     protected $fillable = [
         'sale_id',
+        'source',
+        'order_id',
         'shift_id',
         'cashier_id',
         'total',
@@ -30,11 +33,21 @@ class Sale extends Model
             ->lockForUpdate()
             ->count();
 
-        return 'INV-' . $dateString . '-' . str_pad((string) ($todayCount + 1), 4, '0', STR_PAD_LEFT);
+        return 'INV-'.$dateString.'-'.str_pad((string) ($todayCount + 1), 4, '0', STR_PAD_LEFT);
     }
 
     public function shift(): BelongsTo
     {
         return $this->belongsTo(CashierShift::class, 'shift_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function paymentMethodLabel(): string
+    {
+        return PaymentMethod::label($this->payment_method);
     }
 }

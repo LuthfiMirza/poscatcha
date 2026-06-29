@@ -103,6 +103,7 @@ class AdminChatbotIntentParser
         if ($this->isStockCheckIntent($normalized)) {
             return $this->buildPayload('cek_stok_produk', array_merge(
                 $this->extractProductContext($normalized),
+                ['stock_target' => $this->extractStockTarget($normalized)],
                 $this->extractTimeFilters($normalized, 'all_time')
             ), $original, $normalized);
         }
@@ -469,6 +470,15 @@ class AdminChatbotIntentParser
         ];
     }
 
+    protected function extractStockTarget(string $message): string
+    {
+        if ($this->containsAny($message, ['stok produk', 'stok barang', 'stok menu'])) {
+            return 'product';
+        }
+
+        return 'raw_material';
+    }
+
     protected function extractCashierContext(string $message): array
     {
         return [
@@ -489,7 +499,7 @@ class AdminChatbotIntentParser
     {
         $stopWords = [
             'cek', 'lihat', 'berapa', 'stok', 'stock', 'qty', 'quantity', 'sisa',
-            'produk', 'barang', 'untuk', 'yang', 'dari', 'dengan', 'detail',
+            'produk', 'barang', 'menu', 'untuk', 'yang', 'dari', 'dengan', 'detail',
             'tolong', 'riwayat', 'mutasi', 'pergerakan', 'movement', 'history', 'penjualan',
             'ringkasan', 'harian', 'mingguan', 'bulanan', 'hari', 'minggu', 'bulan',
             'ini', 'paling', 'laku', 'terlaris', 'show', 'data', 'akan', 'mendekati',
