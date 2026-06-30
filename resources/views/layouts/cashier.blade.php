@@ -42,8 +42,6 @@
         @include('cashier.partials.flash')
         @yield('content')
     </main>
-    @include('layouts.cashier-template.footer')
-
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
     <!-- Vendor JS Files -->
