@@ -51,14 +51,17 @@
         .pos-shell {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 280px;
-            min-height: calc(100vh - 89px);
+            height: calc(100vh - 89px);
+            overflow: hidden;
             background: #ffffff;
         }
 
         .pos-products {
             min-width: 0;
+            min-height: 0;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
             background: #ffffff;
         }
 
@@ -109,11 +112,165 @@
             white-space: nowrap;
         }
 
+        .pos-online-order-widget {
+            position: relative;
+            flex: 0 0 auto;
+        }
+
+        .pos-online-order-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border: 1px solid #f1f1f1;
+            border-radius: 999px;
+            background: #ffffff;
+            color: #4b5563;
+        }
+
+        .pos-online-order-btn.has-order {
+            border-color: var(--cha-orange);
+            color: var(--cha-orange);
+            background: var(--orange-bg);
+        }
+
+        .pos-online-order-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 19px;
+            height: 19px;
+            padding: 0 5px;
+            border: 2px solid #ffffff;
+            border-radius: 999px;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 15px;
+            text-align: center;
+        }
+
+        .pos-online-order-popup {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            z-index: 20;
+            width: min(340px, calc(100vw - 40px));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 18px 45px rgba(17, 24, 39, 0.14);
+            overflow: hidden;
+        }
+
+        .pos-online-order-popup__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pos-online-order-popup__title {
+            color: #111827;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pos-online-order-popup__subtitle {
+            margin-top: 2px;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .pos-online-order-close {
+            border: 0;
+            background: transparent;
+            color: #9ca3af;
+            padding: 0;
+        }
+
+        .pos-online-order-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .pos-online-order-item {
+            display: block;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f7f7f7;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .pos-online-order-item:hover {
+            background: #fafafa;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .pos-online-order-item__top,
+        .pos-online-order-item__meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .pos-online-order-code {
+            color: #111827;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pos-online-order-total {
+            color: var(--cha-orange);
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .pos-online-order-buyer {
+            margin-top: 4px;
+            color: #4b5563;
+            font-size: 12px;
+        }
+
+        .pos-online-order-item__meta {
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .pos-online-order-empty {
+            padding: 24px 16px;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .pos-online-order-popup__footer {
+            display: block;
+            padding: 11px 16px;
+            background: #fafafa;
+            color: var(--cha-orange);
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+        }
+
         .pos-category-row {
             display: flex;
+            flex: 0 0 auto;
             align-items: center;
             gap: 8px;
             overflow-x: auto;
+            overflow-y: hidden;
             padding: 12px 20px;
             background: #ffffff;
             border-bottom: 1px solid var(--border);
@@ -121,21 +278,30 @@
         }
 
         .pos-category-row::-webkit-scrollbar,
+        .pos-products::-webkit-scrollbar,
         .pos-order-list::-webkit-scrollbar {
             display: none;
         }
 
         .pos-pill {
             display: inline-flex;
+            flex: 0 0 max-content;
             align-items: center;
             gap: 8px;
+            width: max-content;
+            min-width: max-content;
             border: 1px solid #e5e5e5;
             border-radius: 999px;
             background: #ffffff;
             color: #8b8b8b;
             font-size: 12px;
             font-weight: 400;
+            line-height: 1.5;
             padding: 6px 16px;
+            white-space: nowrap;
+        }
+
+        .pos-pill span {
             white-space: nowrap;
         }
 
@@ -286,7 +452,9 @@
         .pos-order {
             display: flex;
             flex-direction: column;
-            min-height: calc(100vh - 89px);
+            height: calc(100vh - 89px);
+            min-height: 0;
+            overflow: hidden;
             padding: 16px;
             border-left: 1px solid var(--border);
             background: #ffffff;
@@ -468,6 +636,7 @@
         }
 
         .pos-order-footer {
+            flex: 0 0 auto;
             padding-top: 14px;
         }
 
@@ -661,6 +830,12 @@
                 white-space: normal;
             }
 
+            .pos-online-order-widget {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+            }
+
             .pos-category-row,
             .pos-grid {
                 padding-left: 12px;
@@ -685,6 +860,56 @@
                 <div class="pos-stock-warning">
                     <i class="bi bi-info-circle"></i>
                     <span>{{ $lowStockCount }} produk stok menipis</span>
+                </div>
+
+                <div class="pos-online-order-widget" wire:poll.10s="refreshOnlineOrderNotifications">
+                    <button
+                        type="button"
+                        class="pos-online-order-btn {{ $pending_online_order_count > 0 ? 'has-order' : '' }}"
+                        wire:click="toggleOnlineOrderPopup"
+                        aria-label="Pesanan online pending"
+                    >
+                        <i class="bi bi-bell"></i>
+                        @if ($pending_online_order_count > 0)
+                            <span class="pos-online-order-badge">{{ $pending_online_order_count > 99 ? '99+' : $pending_online_order_count }}</span>
+                        @endif
+                    </button>
+
+                    @if ($show_online_order_popup)
+                        <div class="pos-online-order-popup" wire:click.outside="closeOnlineOrderPopup">
+                            <div class="pos-online-order-popup__header">
+                                <div>
+                                    <div class="pos-online-order-popup__title">Pesanan Online Pending</div>
+                                    <div class="pos-online-order-popup__subtitle">{{ $pending_online_order_count }} pesanan menunggu konfirmasi</div>
+                                </div>
+                                <button type="button" class="pos-online-order-close" wire:click="closeOnlineOrderPopup" aria-label="Tutup popup pesanan online">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+
+                            <div class="pos-online-order-list">
+                                @forelse ($pending_online_orders as $onlineOrder)
+                                    <a href="{{ $onlineOrder['url'] }}" class="pos-online-order-item">
+                                        <div class="pos-online-order-item__top">
+                                            <span class="pos-online-order-code">{{ $onlineOrder['order_code'] }}</span>
+                                            <span class="pos-online-order-total">Rp{{ number_format($onlineOrder['total_price']) }}</span>
+                                        </div>
+                                        <div class="pos-online-order-buyer">{{ $onlineOrder['buyer_name'] }}</div>
+                                        <div class="pos-online-order-item__meta">
+                                            <span>{{ $onlineOrder['items_count'] }} item</span>
+                                            <span>{{ $onlineOrder['created_at'] }}</span>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="pos-online-order-empty">Belum ada pesanan online pending.</div>
+                                @endforelse
+                            </div>
+
+                            <a href="{{ route('online-orders.index', ['status' => \App\Models\Order::STATUS_PENDING]) }}" class="pos-online-order-popup__footer">
+                                Lihat semua pesanan
+                            </a>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -909,6 +1134,8 @@
 
 <script>
 document.addEventListener('click', function (event) {
+    unlockOnlineOrderNotificationAudio();
+
     const toggle = event.target.closest('[data-pos-cart-toggle]');
 
     if (!toggle) {
@@ -934,5 +1161,65 @@ document.addEventListener('livewire:init', function () {
             }, 500);
         };
     });
+
+    Livewire.on('online-order-received', function () {
+        playOnlineOrderNotification();
+    });
 });
+
+let onlineOrderAudioContext = null;
+
+function getOnlineOrderAudioContext() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContext) {
+        return null;
+    }
+
+    if (!onlineOrderAudioContext || onlineOrderAudioContext.state === 'closed') {
+        onlineOrderAudioContext = new AudioContext();
+    }
+
+    return onlineOrderAudioContext;
+}
+
+function unlockOnlineOrderNotificationAudio() {
+    const audioContext = getOnlineOrderAudioContext();
+
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+}
+
+function playOnlineOrderNotification() {
+    const audioContext = getOnlineOrderAudioContext();
+
+    if (!audioContext) {
+        return;
+    }
+
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+
+    const frequencies = [880, 1175];
+
+    frequencies.forEach(function (frequency, index) {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const startAt = audioContext.currentTime + (index * 0.18);
+        const stopAt = startAt + 0.14;
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, startAt);
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, stopAt);
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(startAt);
+        oscillator.stop(stopAt);
+    });
+}
 </script>
