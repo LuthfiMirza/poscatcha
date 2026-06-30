@@ -12,7 +12,7 @@
         <a href="{{ route('buyer.orders.show', $order) }}" class="block rounded-3xl bg-white p-4 shadow-sm">
             <div class="flex items-center justify-between">
                 <p class="font-bold">{{ $order->order_code }}</p>
-                <span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">{{ $order->status }}</span>
+                <span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">{{ $order->statusLabel() }}</span>
             </div>
             <p class="mt-1 text-sm text-stone-500">{{ $order->created_at->format('d M Y H:i') }}</p>
             <p class="mt-2 font-bold">Rp{{ number_format($order->total_price, 0, ',', '.') }}</p>
