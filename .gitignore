@@ -26,3 +26,8 @@ yarn-error.log
 .DS_Store
 **/.DS_Store
 database/exports/*.sql
+
+# Local thesis drafts (not pushed)
+penulisan/Panduan lengkap skripsi si gunadarma 2026 .md
+penulisan/penulisan bab1.md
+penulisan/penulisan bab2.md
