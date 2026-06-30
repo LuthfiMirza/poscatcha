@@ -226,6 +226,68 @@
       border-top: 1px solid #f3f4f6;
     }
 
+    .online-orders-pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .online-orders-pager__summary {
+      color: #9ca3af;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .online-orders-pager__summary strong {
+      color: #111827;
+      font-weight: 800;
+    }
+
+    .online-orders-pager__links {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .online-orders-pager__btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      text-decoration: none;
+    }
+
+    .online-orders-pager__btn:hover,
+    .online-orders-pager__btn:focus {
+      border-color: #fed7aa;
+      background: #fff7ed;
+      color: #e8650a;
+      text-decoration: none;
+    }
+
+    .online-orders-pager__btn.is-active {
+      border-color: #e8650a;
+      background: #e8650a;
+      color: #ffffff;
+    }
+
+    .online-orders-pager__btn.is-disabled {
+      cursor: not-allowed;
+      border-color: #f3f4f6;
+      background: #f9fafb;
+      color: #d1d5db;
+    }
+
     .online-orders-kanban {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -374,6 +436,15 @@
         font-weight: 700;
         text-transform: uppercase;
       }
+
+      .online-orders-pager {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .online-orders-pager__links {
+        justify-content: flex-end;
+      }
     }
   </style>
 @endsection
@@ -479,7 +550,7 @@
     </div>
 
     <div class="online-orders-pagination">
-      {{ $orders->links() }}
+      {{ $orders->links('vendor.pagination.online-orders') }}
     </div>
   </section>
 </div>
