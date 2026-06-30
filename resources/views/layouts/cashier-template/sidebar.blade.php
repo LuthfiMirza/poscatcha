@@ -1,5 +1,5 @@
 @php
-  $isPosPage = request()->routeIs('selling_product', 'list_product', 'online-orders.*');
+  $isPosPage = request()->routeIs('selling_product', 'list_product', 'online-orders.*', 'cashier_profile');
   $isShiftNav = request()->routeIs('cashier.shift.open') || request()->is('cashier/shift/open');
   $isCloseNav = request()->routeIs('cashier.shift.close') || request()->is('cashier/shift/close');
   $isMenuNav = request()->routeIs('list_product') || request()->is('list_product*');
@@ -104,6 +104,13 @@
         justify-content: center;
         text-decoration: none;
       }
+
+      .cashier-pos-sidebar__avatar:hover,
+      .cashier-pos-sidebar__avatar:focus,
+      .cashier-pos-sidebar__avatar.is-active {
+        background: #e8650a;
+        color: #ffffff;
+      }
     </style>
 
     <div class="cashier-pos-sidebar__inner">
@@ -162,7 +169,7 @@
         </li>
       </ul>
 
-      <a href="{{ route('cashier_profile') }}" class="cashier-pos-sidebar__avatar" title="{{ Auth::user()->name }}">
+      <a href="{{ route('cashier_profile') }}" class="cashier-pos-sidebar__avatar {{ request()->routeIs('cashier_profile') ? 'is-active' : '' }}" title="{{ Auth::user()->name }}">
         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
       </a>
     </div>

@@ -14,7 +14,7 @@
   }
 
   $resolvedPageTitle = trim($__env->yieldContent('page-title', $pageTitle));
-  $isPosPage = request()->routeIs('selling_product', 'list_product', 'online-orders.*');
+  $isPosPage = request()->routeIs('selling_product', 'list_product', 'online-orders.*', 'cashier_profile');
   $activeShift = $headerShiftInfo['shift'] ?? null;
   $shiftTransactionCount = $headerShiftInfo['transactions_count'] ?? 0;
 @endphp
