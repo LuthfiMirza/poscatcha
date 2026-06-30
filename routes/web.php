@@ -115,6 +115,9 @@ Route::middleware(['auth', 'verified', 'role:cashier|admin'])
     ->group(function () {
         Route::get('/', [OnlineOrderController::class, 'index'])->name('index');
         Route::get('/{order}', [OnlineOrderController::class, 'show'])->name('show');
+        Route::get('/{order}/print', [OnlineOrderController::class, 'print'])->name('print');
+        Route::post('/{order}/verify-payment', [OnlineOrderController::class, 'verifyPayment'])->name('verify-payment');
+        Route::post('/{order}/reject-payment', [OnlineOrderController::class, 'rejectPayment'])->name('reject-payment');
         Route::post('/{order}/confirm', [OnlineOrderController::class, 'confirm'])->name('confirm');
         Route::post('/{order}/process', [OnlineOrderController::class, 'process'])->name('process');
         Route::post('/{order}/complete', [OnlineOrderController::class, 'complete'])->name('complete');

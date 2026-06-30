@@ -29,6 +29,14 @@ class Order extends Model
 
     public const PAYMENT_QRIS = 'qris';
 
+    public const PAYMENT_STATUS_UNPAID = 'unpaid';
+
+    public const PAYMENT_STATUS_WAITING_VERIFICATION = 'waiting_verification';
+
+    public const PAYMENT_STATUS_PAID = 'paid';
+
+    public const PAYMENT_STATUS_REJECTED = 'payment_rejected';
+
     protected $fillable = [
         'user_id',
         'order_code',
@@ -91,6 +99,11 @@ class Order extends Model
         return $this->hasOne(Sale::class);
     }
 
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(OrderStatusHistory::class)->latest();
+    }
+
     public function isStockDeducted(): bool
     {
         return $this->stock_deducted_at !== null;
@@ -99,5 +112,28 @@ class Order extends Model
     public function paymentMethodLabel(): string
     {
         return PaymentMethod::label($this->payment_method);
+    }
+
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'Menunggu Konfirmasi',
+            self::STATUS_CONFIRMED => 'Diterima',
+            self::STATUS_PROCESSING => 'Diproses',
+            self::STATUS_COMPLETED => 'Selesai',
+            self::STATUS_CANCELLED => 'Dibatalkan',
+            default => ucfirst((string) $this->status),
+        };
+    }
+
+    public function paymentStatusLabel(): string
+    {
+        return match ($this->payment_status) {
+            self::PAYMENT_STATUS_UNPAID => 'Belum Dibayar',
+            self::PAYMENT_STATUS_WAITING_VERIFICATION => 'Menunggu Verifikasi',
+            self::PAYMENT_STATUS_PAID => 'Lunas',
+            self::PAYMENT_STATUS_REJECTED => 'Pembayaran Ditolak',
+            default => ucfirst(str_replace('_', ' ', (string) $this->payment_status)),
+        };
     }
 }

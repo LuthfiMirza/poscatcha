@@ -226,12 +226,108 @@
       border-top: 1px solid #f3f4f6;
     }
 
+    .online-orders-kanban {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .online-orders-kanban__column {
+      border: 1px solid #f0f0f0;
+      border-radius: 18px;
+      background: #fcfcfc;
+      overflow: hidden;
+    }
+
+    .online-orders-kanban__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      background: #ffffff;
+    }
+
+    .online-orders-kanban__title {
+      margin: 0;
+      color: #111827;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .online-orders-kanban__count {
+      border-radius: 999px;
+      background: #fff7ed;
+      color: #e8650a;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+    }
+
+    .online-orders-kanban__body {
+      display: grid;
+      gap: 10px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .online-orders-kanban-card {
+      display: block;
+      border: 1px solid #f3f4f6;
+      border-radius: 14px;
+      background: #ffffff;
+      padding: 12px;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .online-orders-kanban-card:hover {
+      border-color: #fed7aa;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .online-orders-kanban-card__top,
+    .online-orders-kanban-card__meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .online-orders-kanban-card__buyer {
+      margin-top: 6px;
+      color: #4b5563;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .online-orders-kanban-card__meta {
+      margin-top: 8px;
+      color: #9ca3af;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .online-orders-kanban__empty {
+      padding: 24px 12px;
+      color: #9ca3af;
+      font-size: 12px;
+      text-align: center;
+    }
+
     @media (max-width: 991.98px) {
       .online-orders-page {
         padding: 20px 16px;
       }
 
       .online-orders-filter {
+        grid-template-columns: 1fr;
+      }
+
+      .online-orders-kanban {
         grid-template-columns: 1fr;
       }
     }
@@ -296,11 +392,43 @@
     <select class="form-select online-orders-select" name="status">
       <option value="">Semua Status</option>
       @foreach (['pending', 'confirmed', 'processing', 'completed', 'cancelled'] as $status)
-        <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst($status) }}</option>
+        <option value="{{ $status }}" @selected(request('status') === $status)>{{ (new \App\Models\Order(['status' => $status]))->statusLabel() }}</option>
       @endforeach
     </select>
     <button class="online-orders-btn" type="submit">Filter</button>
   </form>
+
+  <section class="online-orders-kanban">
+    @foreach ($kanbanStatuses as $kanbanStatus)
+      @php
+        $statusOrders = $kanbanOrders->get($kanbanStatus, collect());
+        $statusLabel = (new \App\Models\Order(['status' => $kanbanStatus]))->statusLabel();
+      @endphp
+      <div class="online-orders-kanban__column">
+        <div class="online-orders-kanban__header">
+          <h2 class="online-orders-kanban__title">{{ $statusLabel }}</h2>
+          <span class="online-orders-kanban__count">{{ $statusOrders->count() }}</span>
+        </div>
+        <div class="online-orders-kanban__body">
+          @forelse ($statusOrders as $kanbanOrder)
+            <a href="{{ route('online-orders.show', $kanbanOrder) }}" class="online-orders-kanban-card">
+              <div class="online-orders-kanban-card__top">
+                <span class="online-orders-code">{{ $kanbanOrder->order_code }}</span>
+                <span class="online-orders-price">Rp{{ number_format($kanbanOrder->total_price, 0, ',', '.') }}</span>
+              </div>
+              <div class="online-orders-kanban-card__buyer">{{ $kanbanOrder->buyer?->name ?: '-' }}</div>
+              <div class="online-orders-kanban-card__meta">
+                <span>{{ $kanbanOrder->items_count }} item</span>
+                <span>{{ $kanbanOrder->paymentStatusLabel() }}</span>
+              </div>
+            </a>
+          @empty
+            <div class="online-orders-kanban__empty">Tidak ada pesanan.</div>
+          @endforelse
+        </div>
+      </div>
+    @endforeach
+  </section>
 
   <section class="online-orders-card">
     <div class="online-orders-card__header">
@@ -336,9 +464,9 @@
               <td data-label="Total"><span class="online-orders-price">Rp{{ number_format($order->total_price, 0, ',', '.') }}</span></td>
               <td data-label="Bayar">
                 <div>{{ $order->paymentMethodLabel() }}</div>
-                <div class="online-orders-muted">{{ $order->payment_status }}</div>
+                <div class="online-orders-muted">{{ $order->paymentStatusLabel() }}</div>
               </td>
-              <td data-label="Status"><span class="online-orders-status is-{{ $order->status }}">{{ $order->status }}</span></td>
+              <td data-label="Status"><span class="online-orders-status is-{{ $order->status }}">{{ $order->statusLabel() }}</span></td>
               <td data-label="Aksi"><a class="online-orders-detail" href="{{ route('online-orders.show', $order) }}">Detail</a></td>
             </tr>
           @empty

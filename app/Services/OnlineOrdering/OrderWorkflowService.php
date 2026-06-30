@@ -5,6 +5,7 @@ namespace App\Services\OnlineOrdering;
 use App\Models\CashierShift;
 use App\Models\DetailSale;
 use App\Models\Order;
+use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\RawMaterialStockMovement;
@@ -17,6 +18,64 @@ use Illuminate\Validation\ValidationException;
 
 class OrderWorkflowService
 {
+    public function verifyPayment(Order $order, User $actor): Order
+    {
+        return DB::transaction(function () use ($order, $actor) {
+            $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($order->payment_method !== Order::PAYMENT_QRIS) {
+                throw ValidationException::withMessages(['payment_status' => 'Verifikasi pembayaran hanya untuk QRIS.']);
+            }
+
+            if ($order->payment_status === Order::PAYMENT_STATUS_PAID) {
+                throw ValidationException::withMessages(['payment_status' => 'Pembayaran pesanan ini sudah lunas.']);
+            }
+
+            if (in_array($order->status, [Order::STATUS_COMPLETED, Order::STATUS_CANCELLED], true)) {
+                throw ValidationException::withMessages(['status' => 'Pembayaran pesanan ini tidak dapat diverifikasi.']);
+            }
+
+            $fromPaymentStatus = $order->payment_status;
+
+            $order->update([
+                'payment_status' => Order::PAYMENT_STATUS_PAID,
+            ]);
+
+            $this->recordHistory($order, $actor, 'payment_verified', null, $fromPaymentStatus, 'Pembayaran QRIS diverifikasi.');
+
+            return $order->fresh(['items', 'buyer']);
+        });
+    }
+
+    public function rejectPayment(Order $order, User $actor, ?string $reason = null): Order
+    {
+        return DB::transaction(function () use ($order, $actor, $reason) {
+            $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($order->payment_method !== Order::PAYMENT_QRIS) {
+                throw ValidationException::withMessages(['payment_status' => 'Penolakan pembayaran hanya untuk QRIS.']);
+            }
+
+            if ($order->payment_status === Order::PAYMENT_STATUS_PAID) {
+                throw ValidationException::withMessages(['payment_status' => 'Pembayaran yang sudah lunas tidak dapat ditolak.']);
+            }
+
+            if ($order->status !== Order::STATUS_PENDING) {
+                throw ValidationException::withMessages(['status' => 'Pembayaran hanya dapat ditolak saat pesanan masih pending.']);
+            }
+
+            $fromPaymentStatus = $order->payment_status;
+
+            $order->update([
+                'payment_status' => Order::PAYMENT_STATUS_REJECTED,
+            ]);
+
+            $this->recordHistory($order, $actor, 'payment_rejected', null, $fromPaymentStatus, $reason ?: 'Pembayaran QRIS ditolak.');
+
+            return $order->fresh(['items', 'buyer']);
+        });
+    }
+
     public function confirm(Order $order, User $actor): Order
     {
         return DB::transaction(function () use ($order, $actor) {
@@ -30,6 +89,10 @@ class OrderWorkflowService
                 throw ValidationException::withMessages(['stock' => 'Stok pesanan ini sudah pernah dikurangi.']);
             }
 
+            if ($order->payment_method === Order::PAYMENT_QRIS && $order->payment_status !== Order::PAYMENT_STATUS_PAID) {
+                throw ValidationException::withMessages(['payment_status' => 'Verifikasi pembayaran QRIS terlebih dahulu sebelum konfirmasi pesanan.']);
+            }
+
             foreach ($order->items->sortBy('product_id') as $item) {
                 $product = Product::where('product_id', $item->product_id)
                     ->with('recipes.rawMaterial')
@@ -39,6 +102,8 @@ class OrderWorkflowService
                 $this->deductRecipeMaterials($product, (int) $item->quantity, $order->order_code, $actor);
             }
 
+            $fromStatus = $order->status;
+
             $order->update([
                 'status' => Order::STATUS_CONFIRMED,
                 'confirmed_by' => $actor->id,
@@ -46,23 +111,29 @@ class OrderWorkflowService
                 'stock_deducted_at' => now(),
             ]);
 
+            $this->recordHistory($order, $actor, 'confirmed', $fromStatus, null, 'Pesanan dikonfirmasi dan stok dikurangi.');
+
             return $order->fresh(['items', 'buyer']);
         });
     }
 
     public function startProcessing(Order $order, User $actor): Order
     {
-        return DB::transaction(function () use ($order) {
+        return DB::transaction(function () use ($order, $actor) {
             $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             if ($order->status !== Order::STATUS_CONFIRMED) {
                 throw ValidationException::withMessages(['status' => 'Hanya pesanan confirmed yang dapat diproses.']);
             }
 
+            $fromStatus = $order->status;
+
             $order->update([
                 'status' => Order::STATUS_PROCESSING,
                 'processing_at' => now(),
             ]);
+
+            $this->recordHistory($order, $actor, 'processing', $fromStatus, null, 'Pesanan mulai diproses.');
 
             return $order->fresh(['items', 'buyer']);
         });
@@ -92,12 +163,16 @@ class OrderWorkflowService
                 }
             }
 
+            $fromStatus = $order->status;
+
             $order->update([
                 'status' => Order::STATUS_CANCELLED,
                 'cancelled_by' => $actor->id,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason,
             ]);
+
+            $this->recordHistory($order, $actor, 'cancelled', $fromStatus, null, $reason ?: 'Pesanan dibatalkan.');
 
             return $order->fresh(['items', 'buyer']);
         });
@@ -161,15 +236,36 @@ class OrderWorkflowService
                 ]);
             }
 
+            $fromStatus = $order->status;
+            $fromPaymentStatus = $order->payment_status;
+
             $order->update([
                 'status' => Order::STATUS_COMPLETED,
                 'completed_by' => $actor->id,
                 'completed_at' => now(),
-                'payment_status' => 'paid',
+                'payment_status' => Order::PAYMENT_STATUS_PAID,
             ]);
+
+            $this->recordHistory($order, $actor, 'completed', $fromStatus, $fromPaymentStatus, 'Pesanan selesai dan penjualan tercatat.');
 
             return $order->fresh(['items', 'buyer', 'sale']);
         });
+    }
+
+    protected function recordHistory(Order $order, User $actor, string $action, ?string $fromStatus = null, ?string $fromPaymentStatus = null, ?string $note = null): void
+    {
+        $order->refresh();
+
+        OrderStatusHistory::create([
+            'order_id' => $order->id,
+            'actor_id' => $actor->id,
+            'action' => $action,
+            'from_status' => $fromStatus,
+            'to_status' => $order->status,
+            'from_payment_status' => $fromPaymentStatus,
+            'to_payment_status' => $order->payment_status,
+            'note' => $note,
+        ]);
     }
 
     protected function recordProductMovement(Product $product, string $transactionId, int $status, string $reason, int $quantityBefore, int $quantityAfter, User $actor): void

@@ -262,6 +262,32 @@
       background: #fcfcfc;
     }
 
+    .online-order-history {
+      display: grid;
+      gap: 12px;
+      padding: 18px 20px;
+    }
+
+    .online-order-history__item {
+      display: grid;
+      gap: 4px;
+      padding-left: 12px;
+      border-left: 3px solid #fed7aa;
+    }
+
+    .online-order-history__title {
+      color: #111827;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .online-order-history__meta,
+    .online-order-history__note {
+      color: #6b7280;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
     .online-order-btn {
       display: inline-flex;
       align-items: center;
@@ -486,6 +512,17 @@
 @section('content')
 @php
   $statusClass = 'is-'.$order->status;
+  $mustVerifyQris = $order->payment_method === \App\Models\Order::PAYMENT_QRIS
+    && $order->payment_status !== \App\Models\Order::PAYMENT_STATUS_PAID
+    && ! in_array($order->status, [\App\Models\Order::STATUS_COMPLETED, \App\Models\Order::STATUS_CANCELLED], true);
+  $historyActionLabels = [
+    'payment_verified' => 'Pembayaran Diverifikasi',
+    'payment_rejected' => 'Pembayaran Ditolak',
+    'confirmed' => 'Pesanan Diterima',
+    'processing' => 'Pesanan Diproses',
+    'completed' => 'Pesanan Selesai',
+    'cancelled' => 'Pesanan Dibatalkan',
+  ];
 @endphp
 
 <div class="online-order-page">
@@ -557,7 +594,7 @@
             <h2 class="online-order-card__title">Informasi Pesanan</h2>
             <div class="online-order-card__subtitle">Data buyer dan status workflow</div>
           </div>
-          <span class="online-order-status {{ $statusClass }}">{{ $order->status }}</span>
+          <span class="online-order-status {{ $statusClass }}">{{ $order->statusLabel() }}</span>
         </div>
 
         <div class="online-order-info">
@@ -572,7 +609,7 @@
             </div>
             <div class="online-order-info-row">
               <dt>Pembayaran</dt>
-              <dd>{{ $order->paymentMethodLabel() }} <small>/ {{ $order->payment_status }}</small></dd>
+              <dd>{{ $order->paymentMethodLabel() }} <small>/ {{ $order->paymentStatusLabel() }}</small></dd>
             </div>
             <div class="online-order-info-row">
               <dt>Catatan</dt>
@@ -596,10 +633,24 @@
         </div>
 
         <div class="online-order-actions">
+          @if ($mustVerifyQris)
+            <form id="verify-payment-form" method="POST" action="{{ route('online-orders.verify-payment', $order) }}">
+              @csrf
+              <button class="online-order-btn online-order-btn--primary" type="submit"><i class="bi bi-wallet2"></i> Verifikasi Pembayaran</button>
+            </form>
+            <form id="reject-payment-form" method="POST" action="{{ route('online-orders.reject-payment', $order) }}">
+              @csrf
+              <textarea class="form-control online-order-cancel-note mb-2" name="reason" placeholder="Alasan pembayaran ditolak (opsional)"></textarea>
+              <button class="online-order-btn online-order-btn--danger" type="button" data-bs-toggle="modal" data-bs-target="#rejectPaymentModal"><i class="bi bi-wallet2"></i> Tolak Pembayaran</button>
+            </form>
+          @endif
+
+          <a class="online-order-btn online-order-btn--outline" href="{{ route('online-orders.print', $order) }}" target="_blank"><i class="bi bi-printer"></i> Cetak Order</a>
+
           @if ($order->status === 'pending')
             <form id="confirm-order-form" method="POST" action="{{ route('online-orders.confirm', $order) }}">
               @csrf
-              <button class="online-order-btn online-order-btn--success" type="button" data-bs-toggle="modal" data-bs-target="#confirmOrderModal"><i class="bi bi-check-circle"></i> Konfirmasi</button>
+              <button class="online-order-btn online-order-btn--success" type="button" data-bs-toggle="modal" data-bs-target="#confirmOrderModal" @disabled($mustVerifyQris)><i class="bi bi-check-circle"></i> Konfirmasi Pesanan</button>
             </form>
             <form id="cancel-pending-form" method="POST" action="{{ route('online-orders.cancel', $order) }}">
               @csrf
@@ -631,11 +682,53 @@
           @endif
         </div>
       </section>
+
+      <section class="online-order-card">
+        <div class="online-order-card__header">
+          <div>
+            <h2 class="online-order-card__title">Riwayat Status</h2>
+            <div class="online-order-card__subtitle">Audit proses pembayaran dan pesanan</div>
+          </div>
+        </div>
+        <div class="online-order-history">
+          @forelse ($order->statusHistories as $history)
+            <div class="online-order-history__item">
+              <div class="online-order-history__title">{{ $historyActionLabels[$history->action] ?? ucfirst(str_replace('_', ' ', $history->action)) }}</div>
+              <div class="online-order-history__meta">
+                {{ $history->actor?->name ?: 'Sistem' }} • {{ $history->created_at->format('d M Y H:i') }}
+              </div>
+              <div class="online-order-history__note">
+                Status: {{ $history->from_status ? (new \App\Models\Order(['status' => $history->from_status]))->statusLabel().' → ' : '' }}{{ (new \App\Models\Order(['status' => $history->to_status]))->statusLabel() }}
+                @if ($history->from_payment_status || $history->to_payment_status)
+                  <br>Pembayaran: {{ $history->from_payment_status ? (new \App\Models\Order(['payment_status' => $history->from_payment_status]))->paymentStatusLabel().' → ' : '' }}{{ (new \App\Models\Order(['payment_status' => $history->to_payment_status]))->paymentStatusLabel() }}
+                @endif
+                @if ($history->note)
+                  <br>{{ $history->note }}
+                @endif
+              </div>
+            </div>
+          @empty
+            <div class="text-muted small">Belum ada riwayat status.</div>
+          @endforelse
+        </div>
+      </section>
     </aside>
   </div>
 </div>
 
 @if ($order->status === 'pending')
+  @if ($mustVerifyQris)
+    <x-cashier.order-confirm-modal
+      id="rejectPaymentModal"
+      form="reject-payment-form"
+      icon="bi-wallet2"
+      title="Tolak pembayaran QRIS?"
+      message="Status pembayaran akan menjadi ditolak. Pembeli masih bisa membuka detail order untuk membayar ulang QRIS."
+      confirm-label="Ya, Tolak Pembayaran"
+      danger
+    />
+  @endif
+
   <x-cashier.order-confirm-modal
     id="confirmOrderModal"
     form="confirm-order-form"
