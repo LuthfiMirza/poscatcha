@@ -422,6 +422,7 @@ class OnlineOrderingFlowTest extends TestCase
         ]);
         $workflow = app(OrderWorkflowService::class);
 
+        $workflow->verifyPayment($order, $cashier);
         $workflow->confirm($order, $cashier);
         $workflow->startProcessing($order->fresh(), $cashier);
         $workflow->complete($order->fresh(), $cashier);
