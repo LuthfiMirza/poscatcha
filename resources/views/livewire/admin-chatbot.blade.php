@@ -51,7 +51,7 @@
           @endif
 
           <div class="admin-chatbot-message__bubble">
-            {{ $message['text'] }}
+            {!! nl2br(e($message['text'])) !!}
 
             @if (($message['actions'] ?? []) !== [])
               <div class="admin-chatbot-actions">
