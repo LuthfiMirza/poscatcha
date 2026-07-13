@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 
 @section('content')
+@php
+  $formatQuantity = fn ($value) => rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+@endphp
 <div class="pagetitle">
   <h1>Bahan Baku</h1>
   <nav>
@@ -70,14 +73,14 @@
                     <td><input type="text" name="name" class="form-control" value="{{ $material->name }}" required></td>
                     <td>
                       <div class="input-group">
-                        <input type="number" step="0.01" min="0" name="stock" class="form-control" value="{{ $material->stock }}" required>
+                        <input type="number" step="0.01" min="0" name="stock" class="form-control" value="{{ $formatQuantity($material->stock) }}" required>
                         <span class="input-group-text">{{ $material->unit }}</span>
                       </div>
                       @if ($material->stock <= $material->minimum_stock)
                         <span class="badge bg-warning text-dark mt-1">Stok rendah</span>
                       @endif
                     </td>
-                    <td><input type="number" step="0.01" min="0" name="minimum_stock" class="form-control" value="{{ $material->minimum_stock }}" required></td>
+                    <td><input type="number" step="0.01" min="0" name="minimum_stock" class="form-control" value="{{ $formatQuantity($material->minimum_stock) }}" required></td>
                     <td>
                       <input type="hidden" name="unit" value="{{ $material->unit }}">
                       <input type="text" name="reason" class="form-control" value="Restock/Koreksi" required>
@@ -109,8 +112,8 @@
                   <td>{{ $movement->created_at->format('d M Y H:i') }}</td>
                   <td>{{ $movement->rawMaterial->name }}</td>
                   <td>{{ strtoupper($movement->type) }}</td>
-                  <td>{{ number_format((float) $movement->quantity, 2, ',', '.') }} {{ $movement->rawMaterial->unit }}</td>
-                  <td>{{ number_format((float) $movement->quantity_before, 2, ',', '.') }} → {{ number_format((float) $movement->quantity_after, 2, ',', '.') }}</td>
+                  <td>{{ $formatQuantity($movement->quantity) }} {{ $movement->rawMaterial->unit }}</td>
+                  <td>{{ $formatQuantity($movement->quantity_before) }} → {{ $formatQuantity($movement->quantity_after) }}</td>
                   <td>{{ $movement->reason }}</td>
                 </tr>
               @endforeach

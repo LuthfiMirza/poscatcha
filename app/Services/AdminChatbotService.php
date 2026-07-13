@@ -258,7 +258,8 @@ class AdminChatbotService
     protected function productStockListResponse(array $parameters): array
     {
             $products = Product::query()
-                ->select('product_id', 'product_name', 'product_quantity')
+                ->with('recipes.rawMaterial')
+                ->select('id', 'product_id', 'product_name', 'product_quantity')
                 ->orderBy('product_name')
                 ->limit(10)
                 ->get();
@@ -277,12 +278,14 @@ class AdminChatbotService
             }
 
             $lines = $products->map(function ($product, $index) {
+                $availableQuantity = $product->availableQuantity();
+
                 return sprintf(
                     '%d. %s (%s) - stok %s unit',
                     $index + 1,
                     $product->product_name,
                     $product->product_id,
-                    $this->formatNumber($product->product_quantity)
+                    $this->formatNumber($availableQuantity)
                 );
             })->implode('; ');
 
@@ -295,6 +298,7 @@ class AdminChatbotService
                         'product_id' => $product->product_id,
                         'product_name' => $product->product_name,
                         'product_quantity' => $product->product_quantity,
+                        'available_quantity' => $product->availableQuantity(),
                     ])->toArray(),
                 ],
                 'message' => 'Daftar stok produk: ' . $lines . '.',
@@ -306,6 +310,9 @@ class AdminChatbotService
 
     protected function productStockResponse(array $parameters, Product $product, string $messagePrefix = ''): array
     {
+        $product->loadMissing('recipes.rawMaterial');
+        $availableQuantity = $product->availableQuantity();
+
         return [
             'success' => true,
             'intent' => 'cek_stok_produk',
@@ -314,6 +321,7 @@ class AdminChatbotService
                 'product_id' => $product->product_id,
                 'product_name' => $product->product_name,
                 'product_quantity' => $product->product_quantity,
+                'available_quantity' => $availableQuantity,
                 'product_price' => $product->product_price,
                 'product_profit' => $product->product_profit,
                 'product_expired' => $product->product_expired,
@@ -322,7 +330,7 @@ class AdminChatbotService
                 'Stok produk %s (%s) saat ini %s unit. Harga jual %s, profit %s, expired %s.',
                 $product->product_name,
                 $product->product_id,
-                $this->formatNumber($product->product_quantity),
+                $this->formatNumber($availableQuantity),
                 $this->formatRupiah($product->product_price),
                 $this->formatRupiah($product->product_profit),
                 $this->formatDate($product->product_expired)
