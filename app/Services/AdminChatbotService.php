@@ -431,6 +431,10 @@ class AdminChatbotService
     {
         $threshold = (int) ($parsed['parameters']['threshold'] ?? 5);
 
+        if (($parsed['parameters']['stock_target'] ?? 'product') === 'raw_material') {
+            return $this->handleLowRawMaterialStock($parsed, $threshold);
+        }
+
         $products = Product::query()
             ->with('recipes.rawMaterial')
             ->select('id', 'product_id', 'product_name', 'product_quantity', 'product_price')
@@ -493,6 +497,67 @@ class AdminChatbotService
             'actions' => [
                 $this->makeAction('Lihat Produk', 'admin.products.index'),
                 $this->makeAction('Restock', 'purchases.create'),
+            ],
+        ];
+    }
+
+    protected function handleLowRawMaterialStock(array $parsed, int $threshold): array
+    {
+        $materials = RawMaterial::query()
+            ->select('id', 'name', 'stock', 'unit', 'minimum_stock')
+            ->orderBy('stock')
+            ->orderBy('name')
+            ->get()
+            ->filter(fn ($material) => (float) $material->stock <= $threshold || (float) $material->stock <= (float) $material->minimum_stock)
+            ->take(10)
+            ->values();
+
+        if ($materials->isEmpty()) {
+            return [
+                'success' => true,
+                'intent' => 'produk_low_stock',
+                'parameters' => ['threshold' => $threshold, 'stock_target' => 'raw_material'],
+                'data' => [
+                    'threshold' => $threshold,
+                    'raw_materials' => [],
+                ],
+                'message' => "Tidak ada bahan baku dengan stok <= {$this->formatNumber($threshold)} atau di bawah stok minimum saat ini.",
+                'actions' => [
+                    $this->makeAction('Restock', 'purchases.create'),
+                ],
+            ];
+        }
+
+        $lines = $materials->map(function ($material, $index) {
+            return sprintf(
+                '%d. %s - stok %s %s, minimum %s %s',
+                $index + 1,
+                $material->name,
+                $this->formatNumber($material->stock),
+                $material->unit,
+                $this->formatNumber($material->minimum_stock),
+                $material->unit
+            );
+        })->implode("\n");
+
+        return [
+            'success' => true,
+            'intent' => 'produk_low_stock',
+            'parameters' => ['threshold' => $threshold, 'stock_target' => 'raw_material'],
+            'data' => [
+                'threshold' => $threshold,
+                'raw_materials' => $materials->map(fn ($material) => [
+                    'raw_material_id' => $material->id,
+                    'raw_material_name' => $material->name,
+                    'stock' => $material->stock,
+                    'unit' => $material->unit,
+                    'minimum_stock' => $material->minimum_stock,
+                ])->toArray(),
+            ],
+            'message' => "Bahan baku dengan stok paling rendah/menipis:\n{$lines}",
+            'actions' => [
+                $this->makeAction('Restock', 'purchases.create'),
+                $this->makeAction('Lihat Stock Movement', 'stock_movement'),
             ],
         ];
     }

@@ -21,6 +21,7 @@ class AdminChatbot extends Component
         'Riwayat stok bahan gula',
         'Riwayat stok produk M001',
         'Cek stok bahan Es Batu',
+        'Stok bahan terendah',
         'Produk stok menipis',
         'Penjualan minggu ini dibanding minggu lalu',
         'Kasir mana yang naik omzetnya bulan ini',

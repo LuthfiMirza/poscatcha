@@ -67,7 +67,10 @@ class AdminChatbotIntentParser
         if ($this->isLowStockIntent($normalized)) {
             return $this->buildPayload('produk_low_stock', array_merge(
                 $this->extractTimeFilters($normalized, 'all_time'),
-                ['threshold' => $this->extractThreshold($normalized)]
+                [
+                    'threshold' => $this->extractThreshold($normalized),
+                    'stock_target' => $this->extractStockTarget($normalized),
+                ]
             ), $original, $normalized);
         }
 
@@ -162,6 +165,9 @@ class AdminChatbotIntentParser
             'stok rendah',
             'low stock',
             'stok hampir habis',
+            'stok terendah',
+            'stock terendah',
+            'paling rendah',
         ]);
     }
 
@@ -472,8 +478,12 @@ class AdminChatbotIntentParser
 
     protected function extractStockTarget(string $message): string
     {
-        if ($this->containsAny($message, ['stok produk', 'stok barang', 'stok menu'])) {
+        if ($this->containsAny($message, ['stok produk', 'stok barang', 'stok menu', 'produk', 'barang', 'menu'])) {
             return 'product';
+        }
+
+        if ($this->containsAny($message, ['stok bahan', 'bahan baku', 'bahan'])) {
+            return 'raw_material';
         }
 
         return 'raw_material';
