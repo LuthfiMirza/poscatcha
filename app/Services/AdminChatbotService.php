@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\DetailSale;
 use App\Models\Product;
 use App\Models\RawMaterial;
+use App\Models\RawMaterialStockMovement;
 use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\User;
@@ -115,7 +116,7 @@ class AdminChatbotService
             'Produk terlaris dan penjualan per kasir.',
             'Penjualan per metode pembayaran.',
             'Selisih shift kasir.',
-            'Riwayat stock movement produk tertentu.',
+            'Riwayat stock movement produk atau bahan baku tertentu.',
         ];
 
         $secondaryInsights = [
@@ -127,7 +128,7 @@ class AdminChatbotService
         ];
 
         $conditionalInsights = [
-            'Cek stok produk tertentu.',
+            'Cek stok produk atau bahan baku tertentu.',
             'Produk low stock.',
             'Produk akan expired.',
             'Stok mati atau produk tidak terjual.',
@@ -142,7 +143,10 @@ class AdminChatbotService
             'Selisih shift kasir bulan ini',
             'penjualan minggu ini dibanding minggu lalu',
             'kasir mana yang naik omzetnya bulan ini',
-            'riwayat stock movement gula',
+            'riwayat stok bahan gula',
+            'riwayat stok produk M001',
+            'cek stok bahan Es Batu',
+            'produk stok menipis',
         ];
 
         $primarySummary = collect($primaryInsights)
@@ -159,7 +163,7 @@ class AdminChatbotService
             . 'Insight utama: ' . $primarySummary
             . ' Analisis lanjutan: ' . $secondarySummary
             . ' Insight tambahan saat data mendukung: ' . $conditionalSummary
-            . ' Contoh pertanyaan prioritas: ' . implode('; ', $examples) . '.';
+            . ' Contoh pertanyaan prioritas: ' . implode("\n", $examples) . '.';
 
         return [
             'success' => true,
@@ -631,6 +635,16 @@ class AdminChatbotService
         }
 
         if ($productLookup['status'] === 'none') {
+            $materialLookup = $this->resolveRawMaterialLookup($parsed['parameters']);
+
+            if ($materialLookup['status'] === 'multiple') {
+                return $this->rawMaterialCandidatesResponse('riwayat_stock_movement', $parsed['parameters'], $materialLookup['candidates']);
+            }
+
+            if ($materialLookup['status'] === 'single') {
+                return $this->rawMaterialStockMovementResponse($parsed, $materialLookup['raw_material']);
+            }
+
             return [
                 'success' => false,
                 'intent' => 'riwayat_stock_movement',
@@ -722,6 +736,92 @@ class AdminChatbotService
             'actions' => [
                 $this->makeAction('Lihat Stock Movement', 'stock_movement'),
                 $this->makeAction('Lihat Produk', 'admin.products.index'),
+            ],
+        ];
+    }
+
+    protected function rawMaterialStockMovementResponse(array $parsed, RawMaterial $material): array
+    {
+        $window = $this->resolvePeriodWindow($parsed['parameters'], 'all_time');
+
+        $movements = RawMaterialStockMovement::query()
+            ->select(
+                'raw_material_id',
+                'transaction_id',
+                'type',
+                'reason',
+                'quantity',
+                'quantity_before',
+                'quantity_after',
+                'action_by',
+                'created_at'
+            )
+            ->where('raw_material_id', $material->id)
+            ->orderByDesc('created_at');
+
+        $this->applySalesWindow($movements, 'created_at', $window);
+
+        $movements = $movements->limit(10)->get();
+
+        if ($movements->isEmpty()) {
+            return [
+                'success' => false,
+                'intent' => 'riwayat_stock_movement',
+                'parameters' => $parsed['parameters'],
+                'data' => [
+                    'raw_material_id' => $material->id,
+                    'raw_material_name' => $material->name,
+                    'movements' => [],
+                ],
+                'message' => 'Tidak ada riwayat stock movement untuk bahan ' . $material->name . ' pada periode tersebut.',
+                'actions' => [
+                    $this->makeAction('Lihat Stock Movement', 'stock_movement'),
+                    $this->makeAction('Restock', 'purchases.create'),
+                ],
+            ];
+        }
+
+        $lines = $movements->map(function ($movement, $index) use ($material) {
+            return sprintf(
+                '%d. %s | %s/%s | qty %s %s | %s -> %s | %s',
+                $index + 1,
+                $this->formatDateTime($movement->created_at),
+                strtoupper($movement->type),
+                $movement->reason,
+                $this->formatNumber($movement->quantity),
+                $material->unit,
+                $this->formatNumber($movement->quantity_before),
+                $this->formatNumber($movement->quantity_after),
+                $movement->action_by
+            );
+        })->implode("\n");
+
+        return [
+            'success' => true,
+            'intent' => 'riwayat_stock_movement',
+            'parameters' => $parsed['parameters'],
+            'data' => [
+                'raw_material_id' => $material->id,
+                'raw_material_name' => $material->name,
+                'period' => $window['period'],
+                'movements' => $movements->map(function ($movement) {
+                    return [
+                        'raw_material_id' => $movement->raw_material_id,
+                        'transaction_id' => $movement->transaction_id,
+                        'type' => $movement->type,
+                        'reason' => $movement->reason,
+                        'quantity' => $movement->quantity,
+                        'quantity_before' => $movement->quantity_before,
+                        'quantity_after' => $movement->quantity_after,
+                        'action_by' => $movement->action_by,
+                        'created_at' => $movement->created_at,
+                    ];
+                })->toArray(),
+            ],
+            'message' => '10 riwayat stock movement terbaru untuk bahan ' . $material->name . ' ' . $window['label'] . ":\n" . $lines,
+            'actions' => [
+                $this->makeAction('Lihat Stock Movement', 'stock_movement'),
+                $this->makeAction('Restock', 'purchases.create'),
             ],
         ];
     }

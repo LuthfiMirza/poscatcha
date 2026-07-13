@@ -120,7 +120,7 @@
       @enderror
 
       <div class="admin-chatbot-panel__hint">
-        Contoh: <span>"cek stok gula"</span>, <span>"penjualan minggu ini dibanding minggu lalu"</span>, <span>"kasir mana yang naik omzetnya bulan ini"</span>
+        Contoh: <span>"cek stok bahan gula"</span>, <span>"riwayat stok produk M001"</span>, <span>"produk stok menipis"</span>
       </div>
     </div>
   </aside>
@@ -327,6 +327,7 @@
         padding: 12px 14px;
         font-size: 0.92rem;
         line-height: 1.55;
+        white-space: pre-line;
         word-break: break-word;
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
       }

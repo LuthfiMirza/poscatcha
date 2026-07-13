@@ -499,7 +499,7 @@ class AdminChatbotIntentParser
     {
         $stopWords = [
             'cek', 'lihat', 'berapa', 'stok', 'stock', 'qty', 'quantity', 'sisa',
-            'produk', 'barang', 'menu', 'untuk', 'yang', 'dari', 'dengan', 'detail',
+            'produk', 'barang', 'menu', 'bahan', 'baku', 'untuk', 'yang', 'dari', 'dengan', 'detail',
             'tolong', 'riwayat', 'mutasi', 'pergerakan', 'movement', 'history', 'penjualan',
             'ringkasan', 'harian', 'mingguan', 'bulanan', 'hari', 'minggu', 'bulan',
             'ini', 'paling', 'laku', 'terlaris', 'show', 'data', 'akan', 'mendekati',
