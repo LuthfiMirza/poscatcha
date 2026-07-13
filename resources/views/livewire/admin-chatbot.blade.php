@@ -51,7 +51,7 @@
           @endif
 
           <div class="admin-chatbot-message__bubble">
-            {!! nl2br(e($message['text'])) !!}
+            <div class="admin-chatbot-message__text">{!! nl2br(e($message['text'])) !!}</div>
 
             @if (($message['actions'] ?? []) !== [])
               <div class="admin-chatbot-actions">
@@ -327,9 +327,12 @@
         padding: 12px 14px;
         font-size: 0.92rem;
         line-height: 1.55;
-        white-space: pre-line;
         word-break: break-word;
         box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      }
+
+      .admin-chatbot-message__text {
+        white-space: normal;
       }
 
       .admin-chatbot-message--assistant .admin-chatbot-message__bubble {
