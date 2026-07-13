@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 
 @section('content')
+@php
+  $formatQuantity = fn ($value) => $value === null || $value === '' ? '' : rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+@endphp
 <div class="pagetitle">
   <h1>Resep Produk</h1>
   <nav>
@@ -36,7 +39,7 @@
                     @endforeach
                   </select>
                 </td>
-                <td><input type="number" step="0.01" min="0.01" name="recipes[{{ $index }}][quantity_required]" class="form-control" value="{{ $row['quantity_required'] ?? '' }}"></td>
+                <td><input type="number" step="0.01" min="0.01" name="recipes[{{ $index }}][quantity_required]" class="form-control" value="{{ $formatQuantity($row['quantity_required'] ?? '') }}"></td>
                 <td><button type="button" class="btn btn-outline-danger btn-sm remove-row">Hapus</button></td>
               </tr>
             @empty
