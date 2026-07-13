@@ -287,7 +287,7 @@ class AdminChatbotService
                     $product->product_id,
                     $this->formatNumber($availableQuantity)
                 );
-            })->implode('; ');
+            })->implode("\n");
 
             return [
                 'success' => true,
@@ -301,7 +301,7 @@ class AdminChatbotService
                         'available_quantity' => $product->availableQuantity(),
                     ])->toArray(),
                 ],
-                'message' => 'Daftar stok produk: ' . $lines . '.',
+                'message' => "Daftar stok produk:\n" . $lines,
                 'actions' => [
                     $this->makeAction('Lihat Produk', 'admin.products.index'),
                 ],
@@ -372,7 +372,7 @@ class AdminChatbotService
                 $this->formatNumber($material->stock),
                 $material->unit
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -387,7 +387,7 @@ class AdminChatbotService
                     'minimum_stock' => $material->minimum_stock,
                 ])->toArray(),
             ],
-            'message' => 'Daftar stok bahan baku: ' . $lines . '.',
+            'message' => "Daftar stok bahan baku:\n" . $lines,
             'actions' => [
                 $this->makeAction('Restock', 'purchases.create'),
                 $this->makeAction('Lihat Stock Movement', 'stock_movement'),
@@ -428,12 +428,22 @@ class AdminChatbotService
         $threshold = (int) ($parsed['parameters']['threshold'] ?? 5);
 
         $products = Product::query()
-            ->select('product_id', 'product_name', 'product_quantity', 'product_price')
-            ->where('product_quantity', '<=', $threshold)
-            ->orderBy('product_quantity')
+            ->with('recipes.rawMaterial')
+            ->select('id', 'product_id', 'product_name', 'product_quantity', 'product_price')
             ->orderBy('product_name')
-            ->limit(10)
-            ->get();
+            ->get()
+            ->map(function ($product) {
+                $product->available_quantity = $product->availableQuantity();
+
+                return $product;
+            })
+            ->filter(fn ($product) => $product->available_quantity <= $threshold)
+            ->sortBy([
+                ['available_quantity', 'asc'],
+                ['product_name', 'asc'],
+            ])
+            ->take(10)
+            ->values();
 
         if ($products->isEmpty()) {
             return [
@@ -457,9 +467,9 @@ class AdminChatbotService
                 $index + 1,
                 $product->product_name,
                 $product->product_id,
-                $this->formatNumber($product->product_quantity)
+                $this->formatNumber($product->available_quantity)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -467,9 +477,15 @@ class AdminChatbotService
             'parameters' => ['threshold' => $threshold],
             'data' => [
                 'threshold' => $threshold,
-                'products' => $products->toArray(),
+                'products' => $products->map(fn ($product) => [
+                    'product_id' => $product->product_id,
+                    'product_name' => $product->product_name,
+                    'product_quantity' => $product->product_quantity,
+                    'available_quantity' => $product->available_quantity,
+                    'product_price' => $product->product_price,
+                ])->toArray(),
             ],
-            'message' => "Produk dengan stok menipis (<= {$this->formatNumber($threshold)}) adalah: {$lines}.",
+            'message' => "Produk dengan stok menipis (<= {$this->formatNumber($threshold)}) adalah:\n{$lines}",
             'actions' => [
                 $this->makeAction('Lihat Produk', 'admin.products.index'),
                 $this->makeAction('Restock', 'purchases.create'),
@@ -523,7 +539,7 @@ class AdminChatbotService
                 $this->formatNumber($product->total_quantity),
                 $this->formatRupiah($product->total_revenue)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -677,7 +693,7 @@ class AdminChatbotService
                 $this->formatNumber($movement->quantity_after),
                 $movement->action_by
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -717,7 +733,8 @@ class AdminChatbotService
         $deadline = now()->copy()->addDays($days)->endOfDay()->toDateString();
 
         $products = Product::query()
-            ->select('product_id', 'product_name', 'product_quantity', 'product_expired')
+            ->with('recipes.rawMaterial')
+            ->select('id', 'product_id', 'product_name', 'product_quantity', 'product_expired')
             ->whereBetween('product_expired', [$today, $deadline])
             ->orderBy('product_expired')
             ->limit(10)
@@ -740,15 +757,17 @@ class AdminChatbotService
         }
 
         $lines = $products->map(function ($product, $index) {
+            $availableQuantity = $product->availableQuantity();
+
             return sprintf(
                 '%d. %s (%s) - expired %s, stok %s unit',
                 $index + 1,
                 $product->product_name,
                 $product->product_id,
                 $this->formatDate($product->product_expired),
-                $this->formatNumber($product->product_quantity)
+                $this->formatNumber($availableQuantity)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -810,7 +829,7 @@ class AdminChatbotService
                 $this->formatNumber($cashier->transaction_count),
                 $this->formatRupiah($cashier->total_sales)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -902,7 +921,7 @@ class AdminChatbotService
                 $this->formatNumber($item['stock_in']),
                 $this->formatNumber($item['stock_out'])
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -967,7 +986,7 @@ class AdminChatbotService
                 $this->formatNumber($row->transaction_count),
                 $this->formatRupiah($row->total_sales)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1041,7 +1060,7 @@ class AdminChatbotService
                 $this->formatRupiah($row->total_revenue),
                 number_format($margin, 1, ',', '.')
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1121,7 +1140,7 @@ class AdminChatbotService
                 $this->formatNumber($product->qty_sold),
                 $this->formatRupiah($product->revenue)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1160,10 +1179,17 @@ class AdminChatbotService
                     ->whereColumn('detail_sales.product_id', 'products.product_id')
                     ->whereBetween('sales.created_at', [$start, $end]);
             })
-            ->orderByDesc('product_quantity')
+            ->with('recipes.rawMaterial')
             ->orderBy('product_name')
             ->limit(10)
-            ->get(['product_id', 'product_name', 'product_quantity', 'product_expired']);
+            ->get(['id', 'product_id', 'product_name', 'product_quantity', 'product_expired'])
+            ->map(function ($product) {
+                $product->available_quantity = $product->availableQuantity();
+
+                return $product;
+            })
+            ->sortByDesc('available_quantity')
+            ->values();
 
         if ($products->isEmpty()) {
             return [
@@ -1184,10 +1210,10 @@ class AdminChatbotService
                 $index + 1,
                 $product->product_name,
                 $product->product_id,
-                $this->formatNumber($product->product_quantity),
+                $this->formatNumber($product->available_quantity),
                 $this->formatDate($product->product_expired)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1261,7 +1287,7 @@ class AdminChatbotService
                 $this->formatDateTime($sale->created_at),
                 $this->formatRupiah($sale->total)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1339,7 +1365,7 @@ class AdminChatbotService
                 $this->formatRupiah($category->revenue),
                 $this->formatRupiah($category->profit)
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1419,7 +1445,7 @@ class AdminChatbotService
                 $this->formatDateTime($shift['shift_start']),
                 $differenceLabel
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1563,7 +1589,7 @@ class AdminChatbotService
                 $this->formatRupiah($row['current_total']),
                 $this->formatRupiah($row['comparison_total'])
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1636,7 +1662,7 @@ class AdminChatbotService
                 $this->formatNumber($row['current_quantity']),
                 $this->formatNumber($row['comparison_quantity'])
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => true,
@@ -1911,7 +1937,7 @@ class AdminChatbotService
                 $product->product_name,
                 $product->product_id
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => false,
@@ -1940,7 +1966,7 @@ class AdminChatbotService
                 $this->formatNumber($material->stock),
                 $material->unit
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => false,
@@ -1970,7 +1996,7 @@ class AdminChatbotService
                 $index + 1,
                 $cashier->name
             );
-        })->implode('; ');
+        })->implode("\n");
 
         return [
             'success' => false,
