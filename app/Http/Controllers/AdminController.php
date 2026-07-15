@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules;
 use Illuminate\Auth\Events\Registered;
@@ -169,19 +170,9 @@ class AdminController extends Controller
         $buyPrice = (int) ($validated['buy_price'] ?? 0);
         $productProfit = (int) $validated['product_price'] - $buyPrice;
 
-
-        $product_image = null;
-
-        if ($request->hasFile('product_image')) { 
-            $image = $request->file('product_image');
-            $name = date('Ymd_His') . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-            
-            // Simpan ke storage Laravel 
-            $image->storeAs('assets/product', $name);
-            
-            // Simpan hanya nama file untuk database
-            $product_image = str_replace('public/', '', $name);
-        }    
+        $product_image = $request->hasFile('product_image')
+            ? $this->storeProductImage($request->file('product_image'))
+            : null;
     
         $product = Product::postProduct(
             $validated['product_id'],
@@ -271,13 +262,10 @@ class AdminController extends Controller
 
         if ($request->hasFile('product_image')) {
             if ($product->product_image) {
-                Storage::delete('assets/product/' . $product->product_image);
+                $this->deleteProductImage($product->product_image);
             }
 
-            $image = $request->file('product_image');
-            $name = date('Ymd_His') . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('assets/product', $name);
-            $product_image = str_replace('public/', '', $name);
+            $product_image = $this->storeProductImage($request->file('product_image'));
 
 
         } else {
@@ -335,7 +323,7 @@ class AdminController extends Controller
 
        $product = Product::find($id);
 
-       Storage::delete('assets/product/' . $product->product_image);
+       $this->deleteProductImage($product->product_image);
        
        $product = Product::deleteProduct(
            $id,
@@ -347,6 +335,46 @@ class AdminController extends Controller
        );
        
        return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully');
+    }
+
+    protected function storeProductImage(UploadedFile $image): string
+    {
+        $name = date('Ymd_His') . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+
+        Storage::disk('public')->putFileAs('assets/product', $image, $name);
+        $this->syncProductImageToPublicStorage($name);
+
+        return $name;
+    }
+
+    protected function syncProductImageToPublicStorage(string $name): void
+    {
+        $source = storage_path('app/public/assets/product/' . $name);
+        $destination = public_path('storage/assets/product/' . $name);
+
+        if (is_link(public_path('storage')) || ! file_exists($source)) {
+            return;
+        }
+
+        if (! is_dir(dirname($destination))) {
+            mkdir(dirname($destination), 0775, true);
+        }
+
+        copy($source, $destination);
+    }
+
+    protected function deleteProductImage(?string $name): void
+    {
+        if (blank($name)) {
+            return;
+        }
+
+        Storage::disk('public')->delete('assets/product/' . $name);
+
+        $publicStoragePath = public_path('storage/assets/product/' . $name);
+        if (! is_link(public_path('storage')) && file_exists($publicStoragePath)) {
+            unlink($publicStoragePath);
+        }
     }
 
     public function add_category()
