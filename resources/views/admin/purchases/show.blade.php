@@ -68,28 +68,41 @@
                 <th>No</th>
                 <th>Bahan</th>
                 <th>Satuan</th>
-                <th>Qty</th>
-                <th>Harga Beli / Unit</th>
+                <th>Kemasan</th>
+                <th>Total Masuk</th>
+                <th>Harga Total</th>
+                <th>Harga / Satuan</th>
                 <th>Subtotal</th>
               </tr>
             </thead>
             <tbody>
               @php $grandTotal = 0; @endphp
               @foreach ($purchase->items as $index => $item)
-                @php $subtotal = $item->quantity * $item->buy_price; $grandTotal += $subtotal; @endphp
+                @php
+                  $subtotal = (float) $item->buy_price;
+                  $grandTotal += $subtotal;
+                  $unitPrice = (float) $item->quantity > 0 ? $subtotal / (float) $item->quantity : 0;
+                @endphp
                 <tr>
                   <td>{{ $index + 1 }}</td>
                   <td>{{ $item->rawMaterial?->name ?: '-' }}</td>
                   <td>{{ $item->rawMaterial?->unit ?: '-' }}</td>
-                  <td>{{ number_format((float) $item->quantity, 2, ',', '.') }}</td>
+                  <td>
+                    {{ number_format((float) ($item->package_quantity ?? 1), 2, ',', '.') }}
+                    {{ $item->package_label ?: 'kemasan' }} x
+                    {{ number_format((float) ($item->package_size ?? $item->quantity), 2, ',', '.') }}
+                    {{ $item->rawMaterial?->unit ?: '' }}
+                  </td>
+                  <td>{{ number_format((float) $item->quantity, 2, ',', '.') }} {{ $item->rawMaterial?->unit ?: '' }}</td>
                   <td>Rp{{ number_format($item->buy_price, 2, ',', '.') }}</td>
+                  <td>Rp{{ number_format($unitPrice, 2, ',', '.') }} / {{ $item->rawMaterial?->unit ?: 'unit' }}</td>
                   <td>Rp{{ number_format($subtotal, 2, ',', '.') }}</td>
                 </tr>
               @endforeach
             </tbody>
             <tfoot>
               <tr>
-                <th colspan="5" class="text-end">Grand Total</th>
+                <th colspan="7" class="text-end">Grand Total</th>
                 <th>Rp{{ number_format($grandTotal, 2, ',', '.') }}</th>
               </tr>
             </tfoot>

@@ -14,6 +14,9 @@ class PurchaseItem extends Model
         'purchase_id',
         'raw_material_id',
         'product_id',
+        'package_quantity',
+        'package_size',
+        'package_label',
         'quantity',
         'buy_price',
     ];
@@ -22,6 +25,8 @@ class PurchaseItem extends Model
     {
         return [
             'buy_price' => 'decimal:2',
+            'package_quantity' => 'decimal:2',
+            'package_size' => 'decimal:2',
             'quantity' => 'decimal:2',
         ];
     }

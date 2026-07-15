@@ -38,8 +38,9 @@ class PurchaseController extends Controller
     {
         $suppliers = Supplier::query()->orderBy('name')->get();
         $rawMaterials = RawMaterial::query()->orderBy('name')->get();
+        $lastPurchaseItems = $this->lastPurchaseItemsByMaterial();
 
-        return view('admin.purchases.create', compact('suppliers', 'rawMaterials'));
+        return view('admin.purchases.create', compact('suppliers', 'rawMaterials', 'lastPurchaseItems'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -77,8 +78,9 @@ class PurchaseController extends Controller
         $purchase->load('items.rawMaterial');
         $suppliers = Supplier::query()->orderBy('name')->get();
         $rawMaterials = RawMaterial::query()->orderBy('name')->get();
+        $lastPurchaseItems = $this->lastPurchaseItemsByMaterial();
 
-        return view('admin.purchases.edit', compact('purchase', 'suppliers', 'rawMaterials'));
+        return view('admin.purchases.edit', compact('purchase', 'suppliers', 'rawMaterials', 'lastPurchaseItems'));
     }
 
     public function update(Request $request, Purchase $purchase): RedirectResponse
@@ -147,6 +149,29 @@ class PurchaseController extends Controller
         return sprintf('PO-%s-%04d', $datePart, $lastSequence + 1);
     }
 
+    protected function lastPurchaseItemsByMaterial()
+    {
+        return PurchaseItem::query()
+            ->with(['purchase.supplier', 'rawMaterial'])
+            ->whereNotNull('raw_material_id')
+            ->latest('id')
+            ->get()
+            ->unique('raw_material_id')
+            ->mapWithKeys(function (PurchaseItem $item) {
+                return [$item->raw_material_id => [
+                    'package_quantity' => (float) ($item->package_quantity ?? 1),
+                    'package_size' => (float) ($item->package_size ?? $item->quantity),
+                    'package_label' => $item->package_label ?: 'kemasan',
+                    'quantity' => (float) $item->quantity,
+                    'buy_price' => (float) $item->buy_price,
+                    'unit_price' => (float) $item->quantity > 0 ? (float) $item->buy_price / (float) $item->quantity : 0,
+                    'unit' => $item->rawMaterial?->unit,
+                    'supplier' => $item->purchase?->supplier_label,
+                    'date' => $item->purchase?->purchase_date?->format('d M Y'),
+                ]];
+            });
+    }
+
     protected function validatePurchase(Request $request): array
     {
         $validator = Validator::make($request->all(), [
@@ -157,7 +182,10 @@ class PurchaseController extends Controller
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.raw_material_id' => ['required', 'exists:raw_materials,id'],
-            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.package_quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.package_size' => ['required', 'numeric', 'min:0.01'],
+            'items.*.package_label' => ['nullable', 'string', 'max:50'],
+            'items.*.quantity' => ['nullable', 'numeric', 'min:0.01'],
             'items.*.buy_price' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -180,13 +208,19 @@ class PurchaseController extends Controller
         foreach ($items as $item) {
             $material = RawMaterial::query()->whereKey($item['raw_material_id'])->lockForUpdate()->firstOrFail();
             $quantityBefore = (float) $material->stock;
-            $quantityAfter = $quantityBefore + (float) $item['quantity'];
+            $packageQuantity = (float) $item['package_quantity'];
+            $packageSize = (float) $item['package_size'];
+            $totalQuantity = $packageQuantity * $packageSize;
+            $quantityAfter = $quantityBefore + $totalQuantity;
 
             PurchaseItem::create([
                 'purchase_id' => $purchase->id,
                 'raw_material_id' => $material->id,
                 'product_id' => null,
-                'quantity' => $item['quantity'],
+                'package_quantity' => $packageQuantity,
+                'package_size' => $packageSize,
+                'package_label' => $item['package_label'] ?? null,
+                'quantity' => $totalQuantity,
                 'buy_price' => $item['buy_price'],
             ]);
 
@@ -197,7 +231,7 @@ class PurchaseController extends Controller
                 'transaction_id' => $purchase->purchase_number,
                 'type' => 'in',
                 'reason' => 'Restock Purchase',
-                'quantity' => $item['quantity'],
+                'quantity' => $totalQuantity,
                 'quantity_before' => $quantityBefore,
                 'quantity_after' => $quantityAfter,
                 'action_by' => Auth::user()->name,
