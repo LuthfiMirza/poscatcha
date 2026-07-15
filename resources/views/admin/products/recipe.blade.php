@@ -27,6 +27,9 @@
         Setelah resep disimpan, modal produk otomatis dihitung dari harga restock terakhir tiap bahan. Kalau harga bahan belum ada, nilainya dihitung Rp0 sampai bahan pernah direstock.
       </div>
       <div class="alert alert-warning d-none" id="zero-cost-warning"></div>
+      <div class="alert alert-secondary py-2">
+        Harga / Satuan otomatis diambil dari menu Restock/Purchases terakhir. Jika masih tertulis belum ada harga, restock bahan tersebut dulu lengkap dengan harga totalnya.
+      </div>
 
       <form method="POST" action="{{ route('admin.products.recipe.update', $product) }}">
         @csrf
@@ -99,7 +102,9 @@
       const quantity = parseFloat(quantityInput.value || 0);
       const rowCost = unitCost * quantity;
 
-      row.querySelector('.unit-cost').textContent = `${formatRupiah(unitCost)} / ${unit}`;
+      row.querySelector('.unit-cost').textContent = materialSelect.value && unitCost === 0
+        ? `Belum ada harga / ${unit}`
+        : `${formatRupiah(unitCost)} / ${unit}`;
       row.querySelector('.row-cost').textContent = formatRupiah(rowCost);
       totalCost += rowCost;
 
