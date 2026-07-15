@@ -14,7 +14,23 @@ use App\Http\Controllers\SupplierController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', fn () => view('dashboard'))->middleware('verified')->name('dashboard');
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+
+        if ($user->hasRole('admin')) {
+            return redirect()->route('dashboard_admin');
+        }
+
+        if ($user->hasRole('cashier')) {
+            return redirect()->route('selling_product');
+        }
+
+        if ($user->hasRole('buyer')) {
+            return redirect()->route('buyer.shop.index');
+        }
+
+        return redirect('/');
+    })->middleware('verified')->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
