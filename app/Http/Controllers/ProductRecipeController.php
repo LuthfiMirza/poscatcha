@@ -68,8 +68,8 @@ class ProductRecipeController extends Controller
     {
         $materialCosts = $this->latestMaterialUnitCosts();
 
-        return (float) $recipes->map(function (float $quantityRequired, int|string $rawMaterialId) use ($materialCosts) {
-            return $quantityRequired * (float) ($materialCosts[$rawMaterialId] ?? 0);
-        })->sum();
+        return (float) $recipes
+            ->map(fn (float $quantityRequired, int|string $rawMaterialId) => $quantityRequired * (float) ($materialCosts[$rawMaterialId] ?? 0))
+            ->sum();
     }
 }

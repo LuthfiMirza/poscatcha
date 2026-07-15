@@ -19,6 +19,17 @@
           <div class="card-body">
             <h5 class="card-title">Add Product Form</h5>
 
+            @if ($errors->any())
+              <div class="alert alert-danger">
+                <strong>Produk belum bisa disimpan.</strong>
+                <ul class="mb-0 mt-2">
+                  @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                  @endforeach
+                </ul>
+              </div>
+            @endif
+
             <!-- General Form Elements -->
             <form method="POST" action="{{ route('add_product_process') }}" enctype="multipart/form-data">
               @csrf
@@ -26,7 +37,7 @@
                 <label for="product_id" class="col-sm-2 col-form-label">Product ID</label>
                 <div class="col-sm-10">
                   <input type="text" class="form-control" id="product_id" name="product_id" value="{{ old('product_id', $productId) }}" readonly>
-                  <div class="form-text">Product ID dibuat otomatis oleh sistem supaya tidak duplikat.</div>
+                  <div class="form-text">Product ID dibuat otomatis saat produk disimpan supaya tidak duplikat.</div>
                 </div>
               </div>
               <div class="row mb-3">

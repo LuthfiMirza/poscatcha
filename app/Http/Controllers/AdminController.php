@@ -147,7 +147,7 @@ class AdminController extends Controller
     public function add_product_process(Request $request)
     {
         $request->merge([
-            'product_id' => $request->filled('product_id') ? $request->product_id : $this->generateProductId(),
+            'product_id' => $this->generateProductId(),
         ]);
 
         $validated = $request->validate([
