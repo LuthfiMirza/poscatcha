@@ -139,17 +139,23 @@ class AdminController extends Controller
     public function add_product()
     {
         $categories = Category::all();
-        return view('admin.add_product', compact('categories'));
+        $productId = $this->generateProductId();
+
+        return view('admin.add_product', compact('categories', 'productId'));
     }
 
     public function add_product_process(Request $request)
     {
+        $request->merge([
+            'product_id' => $request->filled('product_id') ? $request->product_id : $this->generateProductId(),
+        ]);
+
         $validated = $request->validate([
             'product_id' => ['required', 'string', 'max:5', 'unique:products,product_id'],
             'product_name' => ['required', 'string', 'max:50'],
             'product_category' => ['required', 'string', 'max:6'],
-            'product_price' => ['required', 'integer', 'min:1', 'gte:buy_price'],
-            'buy_price' => ['required', 'integer', 'min:0'],
+            'product_price' => ['required', 'integer', 'min:1'],
+            'buy_price' => ['nullable', 'integer', 'min:0'],
             'product_quantity' => ['required', 'integer', 'min:1'],
             'product_expired' => ['required', 'date'],
             'product_image' => ['required', 'file', 'image'],
@@ -160,7 +166,8 @@ class AdminController extends Controller
         $reason = "Add Product";
         $quantity_before = 0; 
         $user = Auth::user()->name;
-        $productProfit = (int) $validated['product_price'] - (int) $validated['buy_price'];
+        $buyPrice = (int) ($validated['buy_price'] ?? 0);
+        $productProfit = (int) $validated['product_price'] - $buyPrice;
 
 
         $product_image = null;
@@ -182,7 +189,7 @@ class AdminController extends Controller
             $validated['product_category'],
             $product_image,
             $validated['product_price'],
-            $validated['buy_price'],
+            $buyPrice,
             $productProfit,
             $validated['product_quantity'],
             $validated['product_expired'],
@@ -193,7 +200,25 @@ class AdminController extends Controller
             $user,
         );
 
-        return redirect()->route('admin.products.index')->with('success', 'Product added successfully');
+        return redirect()->route('admin.products.recipe.edit', $product)
+            ->with('success', 'Produk berhasil dibuat. Lanjut isi resep agar modal/buy price dihitung otomatis.');
+    }
+
+    protected function generateProductId(): string
+    {
+        $latestProductId = Product::query()
+            ->where('product_id', 'like', 'P%')
+            ->orderByRaw('CAST(SUBSTRING(product_id, 2) AS UNSIGNED) DESC')
+            ->value('product_id');
+
+        $latestSequence = $latestProductId ? (int) substr($latestProductId, 1) : 0;
+
+        do {
+            $latestSequence++;
+            $productId = 'P'.str_pad((string) $latestSequence, 4, '0', STR_PAD_LEFT);
+        } while (Product::query()->where('product_id', $productId)->exists());
+
+        return $productId;
     }
     public function edit_product($id)
     {

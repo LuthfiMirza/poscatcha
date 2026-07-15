@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductRecipe;
+use App\Models\PurchaseItem;
 use App\Models\RawMaterial;
 use Illuminate\Http\Request;
 
@@ -13,8 +14,9 @@ class ProductRecipeController extends Controller
     {
         $product->load('recipes.rawMaterial');
         $materials = RawMaterial::query()->orderBy('name')->get();
+        $materialCosts = $this->latestMaterialUnitCosts();
 
-        return view('admin.products.recipe', compact('product', 'materials'));
+        return view('admin.products.recipe', compact('product', 'materials', 'materialCosts'));
     }
 
     public function update(Request $request, Product $product)
@@ -40,6 +42,34 @@ class ProductRecipeController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.products.index')->with('success', 'Resep produk berhasil disimpan');
+        $buyPrice = $this->calculateRecipeCost($recipes);
+        $product->update([
+            'buy_price' => $buyPrice,
+            'product_profit' => (float) $product->product_price - $buyPrice,
+        ]);
+
+        return redirect()->route('admin.products.index')->with('success', 'Resep produk berhasil disimpan dan modal produk otomatis diperbarui.');
+    }
+
+    protected function latestMaterialUnitCosts()
+    {
+        return PurchaseItem::query()
+            ->whereNotNull('raw_material_id')
+            ->where('quantity', '>', 0)
+            ->latest('id')
+            ->get()
+            ->unique('raw_material_id')
+            ->mapWithKeys(fn (PurchaseItem $item) => [
+                $item->raw_material_id => (float) $item->buy_price / (float) $item->quantity,
+            ]);
+    }
+
+    protected function calculateRecipeCost($recipes): float
+    {
+        $materialCosts = $this->latestMaterialUnitCosts();
+
+        return (float) $recipes->map(function (float $quantityRequired, int|string $rawMaterialId) use ($materialCosts) {
+            return $quantityRequired * (float) ($materialCosts[$rawMaterialId] ?? 0);
+        })->sum();
     }
 }

@@ -25,7 +25,8 @@
               <div class="row mb-3">
                 <label for="product_id" class="col-sm-2 col-form-label">Product ID</label>
                 <div class="col-sm-10">
-                  <input type="text" class="form-control" id="product_id" name="product_id" value="{{ old('product_id')}}" required max="5">
+                  <input type="text" class="form-control" id="product_id" name="product_id" value="{{ old('product_id', $productId) }}" readonly>
+                  <div class="form-text">Product ID dibuat otomatis oleh sistem supaya tidak duplikat.</div>
                 </div>
               </div>
               <div class="row mb-3">
@@ -38,19 +39,14 @@
                 <label for="product_category" class="col-sm-2 col-form-label">Category</label>
                 <div class="col-sm-10">
                   <select class="form-select" aria-label="Default select example" id="product_category" name="product_category" required>
-                    <option selected>Select Category</option>
+                    <option value="">Select Category</option>
                     @foreach ($categories as $index => $category)
                       <option value="{{ $category->category_id }}" {{ old('product_category') == $category->category_id ? 'selected' : ''}}>{{ $category->category_name }}</option>
                     @endforeach
                   </select>
                 </div>
               </div>
-              <div class="row mb-3">
-                <label for="buy_price" class="col-sm-2 col-form-label">Buy Price</label>
-                <div class="col-sm-10">
-                  <input type="number" class="form-control" id="buy_price" name="buy_price" value="{{ old('buy_price', 0) }}" required min="0">
-                </div>
-              </div>
+              <input type="hidden" id="buy_price" name="buy_price" value="0">
               <div class="row mb-3">
                 <label for="product_price" class="col-sm-2 col-form-label">Sell Price</label>
                 <div class="col-sm-10">
@@ -61,6 +57,7 @@
                 <label for="product_profit" class="col-sm-2 col-form-label">Product Profit</label>
                 <div class="col-sm-10">
                   <input type="number" class="form-control" id="product_profit" name="product_profit" value="{{ old('product_profit', 0) }}" readonly>
+                  <div class="form-text">Profit sementara. Setelah resep diisi, modal produk akan dihitung otomatis dari bahan baku.</div>
                 </div>
               </div>
               <div class="row mb-3">
