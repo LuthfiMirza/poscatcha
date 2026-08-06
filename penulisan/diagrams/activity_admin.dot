@@ -1,0 +1,43 @@
+digraph ActivityAdmin {
+  rankdir=TB;
+  bgcolor="white";
+  node [fontname="Helvetica", fontsize=11, style="rounded,filled"];
+  edge [fontname="Helvetica", fontsize=9, color="#555555"];
+
+  start [shape=circle, label="", style=filled, fillcolor="black", width=0.25, fixedsize=true];
+  startlbl [shape=plaintext, label="Mulai", fontname="Helvetica-Italic"];
+
+  admin_dash [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Admin Membuka\nDashboard Produk"];
+  klik_tambah [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Klik Tambah Produk"];
+  isi_data [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Isi Data Dasar Produk\n(nama, kategori, harga jual,\ngambar, expired, quantity)"];
+  simpan_produk [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Simpan Produk\n(Product ID otomatis,\nBuy Price belum diisi)"];
+  redirect_resep [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Redirect ke\nHalaman Resep Produk"];
+  input_bahan [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Input Bahan Baku\n+ Takaran per Produk"];
+  hitung_estimasi [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Sistem Menghitung Estimasi\nModal dari Harga Restock Terakhir"];
+
+  cek_nol [shape=diamond, style="filled", fillcolor="#FDEBD3", color="#7D5A1E", label="Ada Bahan\nBerbiaya Rp0?"];
+  warning [shape=box, style="rounded,filled", fillcolor="#F9D6D5", color="#8B2E2E", label="Tampilkan Peringatan:\nBahan Belum Pernah Direstock"];
+
+  pilihan [shape=diamond, style="filled", fillcolor="#FDEBD3", color="#7D5A1E", label="Simpan Resep atau\nLewati Dulu?"];
+  simpan_resep [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Simpan Resep:\nbuy_price & product_profit\ndiperbarui otomatis"];
+  lewati [shape=box, style="rounded,filled", fillcolor="#EEEEEE", color="#555555", label="Lewati, Isi Nanti:\nbuy_price tetap Rp0\n(badge \"Belum ada resep\")"];
+
+  produk_siap [shape=box, style="rounded,filled", fillcolor="#E8F0FE", color="#1F3864", label="Produk Tampil di\nDaftar Produk Admin"];
+
+  final [shape=doublecircle, label="", style=filled, fillcolor="black", width=0.22, fixedsize=true];
+  finallbl [shape=plaintext, label="Selesai", fontname="Helvetica-Italic"];
+
+  start -> admin_dash;
+  admin_dash -> klik_tambah -> isi_data -> simpan_produk -> redirect_resep -> input_bahan -> hitung_estimasi -> cek_nol;
+  cek_nol -> warning [label="Ya"];
+  cek_nol -> pilihan [label="Tidak"];
+  warning -> pilihan;
+  pilihan -> simpan_resep [label="Simpan Resep"];
+  pilihan -> lewati [label="Lewati"];
+  simpan_resep -> produk_siap;
+  lewati -> produk_siap;
+  produk_siap -> final;
+
+  {rank=same; start; startlbl;}
+  {rank=same; final; finallbl;}
+}
