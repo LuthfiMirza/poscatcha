@@ -1013,10 +1013,6 @@
                     <span>Cash</span>
                 </label>
                 <label class="pos-payment-tab">
-                    <input type="radio" wire:model.live="payment_method" value="2">
-                    <span>Transfer</span>
-                </label>
-                <label class="pos-payment-tab">
                     <input type="radio" wire:model.live="payment_method" value="3">
                     <span>QRIS</span>
                 </label>
