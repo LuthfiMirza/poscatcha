@@ -1,0 +1,132 @@
+digraph ClassDiagram {
+  rankdir=TB;
+  bgcolor="white";
+  splines=ortho;
+  nodesep=0.5;
+  ranksep=0.7;
+  node [shape=plain, fontname="Helvetica"];
+  edge [fontname="Helvetica", fontsize=9, color="#444444", arrowhead=none];
+
+  cls_class = <<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">>;
+
+  User [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>User</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- name: string<BR/>- email: string<BR/>- password: string</TD></TR>
+          </TABLE>>];
+
+  Category [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>Category</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- category_id: string<BR/>- category_name: string</TD></TR>
+          </TABLE>>];
+
+  Product [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>Product</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- product_id: string<BR/>- product_name: string<BR/>- product_category: string<BR/>- product_price: int<BR/>- buy_price: decimal<BR/>- product_profit: int<BR/>- product_quantity: int<BR/>- product_expired: date</TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">+ imageExists(): bool<BR/>+ imageUrl(): string<BR/>+ availableQuantity(): int<BR/>+ hasAvailableStock(qty): bool</TD></TR>
+    </TABLE>>];
+
+  ProductRecipe [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>ProductRecipe</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- product_id: string<BR/>- raw_material_id: int<BR/>- quantity_required: decimal</TD></TR>
+          </TABLE>>];
+
+  RawMaterial [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>RawMaterial</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- name: string<BR/>- unit: string<BR/>- stock: decimal<BR/>- minimum_stock: decimal</TD></TR>
+          </TABLE>>];
+
+  Supplier [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>Supplier</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- name: string<BR/>- phone: string<BR/>- address: string</TD></TR>
+          </TABLE>>];
+
+  Purchase [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>Purchase</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- purchase_number: string<BR/>- supplier_id: int<BR/>- supplier_name: string<BR/>- purchase_date: date<BR/>- invoice_number: string</TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">+ getSupplierLabelAttribute(): string</TD></TR>
+    </TABLE>>];
+
+  PurchaseItem [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>PurchaseItem</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- purchase_id: int<BR/>- raw_material_id: int<BR/>- product_id: string<BR/>- package_quantity: decimal<BR/>- package_size: decimal<BR/>- package_label: string<BR/>- quantity: decimal<BR/>- buy_price: decimal</TD></TR>
+          </TABLE>>];
+
+  CashierShift [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>CashierShift</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- cashier_id: string<BR/>- shift_start: datetime<BR/>- shift_end: datetime<BR/>- opening_cash: int<BR/>- closing_cash: int<BR/>- status: string</TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">+ scopeOpen(query): Builder</TD></TR>
+    </TABLE>>];
+
+  Cart [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>Cart</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- cashier_id: string<BR/>- product_id: string<BR/>- quantity: int<BR/>- sub_total: int</TD></TR>
+          </TABLE>>];
+
+  Sale [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>Sale</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- sale_id: string<BR/>- source: string<BR/>- order_id: int<BR/>- shift_id: int<BR/>- cashier_id: string<BR/>- total: int<BR/>- payment_method: string<BR/>- pay: int<BR/>- change: int</TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">+ paymentMethodLabel(): string</TD></TR>
+    </TABLE>>];
+
+  DetailSale [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>DetailSale</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- sale_id: string<BR/>- product_id: string<BR/>- product_price: int<BR/>- buy_price: decimal<BR/>- product_profit: int<BR/>- quantity: int</TD></TR>
+          </TABLE>>];
+
+  Order [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>Order</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- user_id: int<BR/>- order_code: string<BR/>- status: string<BR/>- payment_method: string<BR/>- payment_status: string<BR/>- total_price: int<BR/>- confirmed_by/completed_by/cancelled_by: int<BR/>- stock_deducted_at: datetime</TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">+ isStockDeducted(): bool<BR/>+ statusLabel(): string<BR/>+ paymentStatusLabel(): string<BR/>+ paymentMethodLabel(): string</TD></TR>
+    </TABLE>>];
+
+  OrderItem [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>OrderItem</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- order_id: int<BR/>- product_id: string<BR/>- price: int<BR/>- quantity: int<BR/>- subtotal: int<BR/>- customization: json</TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">+ customizationSummary(): string</TD></TR>
+    </TABLE>>];
+
+  OrderStatusHistory [label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#E8F0FE" COLOR="#1F3864">
+      <TR><TD ALIGN="CENTER"><B>OrderStatusHistory</B></TD></TR>
+      <TR><TD ALIGN="LEFT" BALIGN="LEFT">- order_id: int<BR/>- actor_id: int<BR/>- action: string<BR/>- from_status/to_status: string<BR/>- from_payment_status/to_payment_status: string</TD></TR>
+          </TABLE>>];
+
+  /* Relationships with multiplicity */
+  Category -> Product [taillabel="1", headlabel="*"];
+  Product -> ProductRecipe [taillabel="1", headlabel="*"];
+  RawMaterial -> ProductRecipe [taillabel="1", headlabel="*"];
+  RawMaterial -> PurchaseItem [taillabel="1", headlabel="*", style=dashed];
+  Product -> PurchaseItem [taillabel="1", headlabel="*", style=dashed];
+  Supplier -> Purchase [taillabel="1", headlabel="*"];
+  Purchase -> PurchaseItem [taillabel="1", headlabel="*"];
+  User -> Purchase [taillabel="1", headlabel="*", label="creator"];
+  User -> CashierShift [taillabel="1", headlabel="*"];
+  CashierShift -> Sale [taillabel="1", headlabel="*"];
+  Product -> Cart [taillabel="1", headlabel="*"];
+  User -> Order [taillabel="1", headlabel="*", label="buyer"];
+  Order -> OrderItem [taillabel="1", headlabel="*"];
+  Product -> OrderItem [taillabel="1", headlabel="*"];
+  Order -> Sale [taillabel="1", headlabel="0..1"];
+  Order -> OrderStatusHistory [taillabel="1", headlabel="*"];
+  User -> OrderStatusHistory [taillabel="1", headlabel="*", label="actor"];
+
+  { rank=same; User; Category; Supplier; }
+  { rank=same; Product; Purchase; CashierShift; }
+  { rank=same; ProductRecipe; RawMaterial; PurchaseItem; Cart; Order; }
+  { rank=same; Sale; OrderItem; }
+  { rank=same; DetailSale; OrderStatusHistory; }
+}
