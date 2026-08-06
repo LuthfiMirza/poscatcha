@@ -1,92 +1,286 @@
 # BAB III
 # METODE PENELITIAN
 
-## 3.1 Objek dan Waktu Penelitian
+## 3.1 Tahapan Penelitian
 
-Penelitian ini mengambil objek pada CATCHA, sebuah usaha yang bergerak di bidang makanan dan minuman. [BUTUH DATA: alamat/lokasi usaha, tahun mulai beroperasi, jumlah kasir/karyawan yang bertugas, dan jam operasional CATCHA — lengkapi dengan data hasil observasi atau keterangan pemilik]. Pemilihan CATCHA sebagai objek didasarkan pada kondisi operasional penjualan yang masih menghadapi kendala pencatatan transaksi, pengelolaan stok bahan baku, dan penanganan pesanan seperti yang sudah diuraikan pada Bab I.
-
-Di CATCHA, transaksi harian ditangani langsung oleh kasir di tempat, sementara permintaan pelanggan yang datang tanpa antre langsung ke lokasi belum tertampung dalam satu alur yang baku. [BUTUH DATA: jumlah rata-rata transaksi per hari, jenis produk yang paling sering dipesan, serta kendala spesifik yang selama ini dirasakan pemilik/kasir CATCHA]. Data-data tersebut nantinya menjadi dasar untuk menilai apakah sistem yang dibangun benar-benar menjawab kebutuhan operasional CATCHA, bukan sekadar mengikuti asumsi umum aplikasi POS.
-
-Waktu penelitian mengikuti jadwal pengembangan sistem yang tercatat pada riwayat kontrol versi (git) proyek ini, yaitu sejak akhir April 2026 sampai dengan penyusunan skripsi ini diselesaikan pada [BUTUH DATA: bulan selesai penyusunan]. Rentang waktu ini mencakup tahap analisis kebutuhan awal, perancangan basis data, penulisan kode program secara bertahap (dimulai dari modul produk dan kategori, dilanjutkan modul transaksi kasir, kemudian modul pembelian dan bahan baku, dan terakhir modul pemesanan online beserta verifikasi QRIS), hingga pengujian sebelum penyusunan laporan.
-
-Penelitian dilakukan secara paralel antara proses pengembangan aplikasi dan proses penggalian kebutuhan dari objek penelitian. Pola kerja semacam ini memang menuntut penyesuaian berulang begitu ada kebutuhan baru yang muncul dari lapangan, tetapi di sisi lain mempermudah validasi setiap fitur langsung terhadap kondisi nyata CATCHA alih-alih menunggu seluruh rancangan selesai lebih dulu.
-
-## 3.2 Alat dan Bahan Penelitian
-
-Perangkat keras yang digunakan selama pengembangan sistem berupa satu unit laptop dengan spesifikasi [BUTUH DATA: prosesor, RAM, dan kapasitas penyimpanan laptop yang dipakai] yang digunakan untuk menulis kode program, menjalankan server lokal, serta melakukan pengujian aplikasi sebelum diakses melalui jaringan. Untuk kebutuhan pengujian pada sisi tampilan, digunakan juga perangkat [BUTUH DATA: perangkat tambahan bila ada, misalnya smartphone untuk menguji tampilan mobile pemesanan online].
-
-Dari sisi perangkat lunak, sistem dibangun menggunakan PHP 8.2 dan framework Laravel 11 sebagai fondasi backend, dipadukan dengan Livewire 3 untuk komponen antarmuka yang membutuhkan interaksi langsung tanpa memuat ulang halaman, misalnya pengelolaan keranjang transaksi kasir. Basis data yang dipakai adalah MySQL, dijalankan melalui XAMPP sebagai lingkungan pengembangan lokal. Manajemen hak akses ditangani oleh paket Spatie Laravel Permission, sementara proses bundling aset frontend (CSS dan JavaScript) memakai Vite. Kode program disusun dengan editor [BUTUH DATA: nama code editor yang dipakai, misalnya Visual Studio Code], dan seluruh perubahan kode dilacak menggunakan Git.
-
-Bahan penelitian mencakup data yang berhubungan langsung dengan objek penelitian, yaitu daftar produk dan kategori yang dijual CATCHA, estimasi harga jual dan harga beli produk, [BUTUH DATA: daftar bahan baku dan resep produk aktual CATCHA bila berbeda dari data uji coba yang dipakai selama pengembangan], serta gambaran alur transaksi yang biasa terjadi di kasir. Selain data primer tersebut, bahan penelitian juga berupa dokumentasi teknis dari framework dan pustaka yang dipakai (Laravel, Livewire, MySQL, Spatie Permission) sebagaimana telah dirujuk pada Bab II.
-
-Kombinasi alat dan bahan di atas dipilih bukan tanpa pertimbangan. Laravel dan Livewire dipilih karena keduanya berada dalam satu ekosistem yang sama sehingga pengembangan fitur interaktif seperti keranjang transaksi tidak perlu menulis JavaScript terpisah, sedangkan MySQL dipilih karena relasi antar data pada sistem ini (produk, resep, transaksi, pesanan) bersifat relasional dan saling terhubung erat.
-
-## 3.3 Metode Pengumpulan Data
-
-Pengumpulan data pada penelitian ini dilakukan melalui beberapa cara yang saling melengkapi. Observasi dilakukan dengan mengamati langsung proses transaksi yang terjadi di CATCHA, mencakup cara kasir mencatat pesanan, cara pembayaran diterima, dan bagaimana stok produk dipantau selama ini. [BUTUH DATA: tanggal dan hasil observasi lapangan di CATCHA, termasuk catatan proses yang diamati].
-
-Wawancara dilakukan kepada pihak yang berhubungan langsung dengan operasional CATCHA, yaitu pemilik usaha dan/atau kasir yang bertugas. Wawancara ini ditujukan untuk menggali permasalahan yang dirasakan dalam pencatatan transaksi manual, kesulitan memantau stok bahan baku, serta harapan terhadap sistem yang akan dibangun. [BUTUH DATA: daftar pertanyaan wawancara beserta ringkasan jawaban narasumber, tanggal wawancara, dan nama/jabatan narasumber sesuai persetujuan yang bersangkutan untuk dicantumkan].
-
-Studi pustaka dilakukan dengan menelusuri jurnal, artikel ilmiah, dan dokumentasi resmi yang berkaitan dengan Point of Sale, pemesanan online, pengelolaan stok berbasis resep, serta pembayaran QRIS, sebagaimana telah diuraikan secara rinci pada Bab II. Studi pustaka ini menjadi rujukan untuk memastikan istilah, konsep, dan pendekatan yang dipakai dalam perancangan sistem konsisten dengan penelitian sejenis yang sudah ada.
-
-Selain ketiga cara di atas, dokumentasi juga dikumpulkan sepanjang proses pengembangan, berupa struktur data yang terbentuk pada basis data (tabel dan relasi), catatan perubahan kode program melalui riwayat commit, serta tangkapan layar antarmuka yang nantinya dipakai pada pembahasan Bab IV. Dokumentasi semacam ini membantu memastikan bahwa uraian pada bab-bab berikutnya benar-benar mencerminkan apa yang sudah diimplementasikan, bukan rencana yang belum terwujud.
-
-## 3.4 Metode Pengembangan Sistem
-
-Sistem pada penelitian ini dikembangkan menggunakan metode Waterfall. Metode ini dipilih karena kebutuhan sistem (transaksi kasir, pengelolaan stok berbasis resep, pemesanan online, verifikasi QRIS manual) sudah dapat dipetakan sejak awal berdasarkan permasalahan yang ditemukan pada Bab I, sehingga tahapan pengembangan dapat disusun secara berurutan tanpa perlu berulang-ulang mengubah arah rancangan besar sistem. Karakteristik Waterfall yang bertahap dan linear juga memudahkan penyusunan laporan skripsi karena setiap tahap menghasilkan dokumen atau luaran yang jelas sebelum berpindah ke tahap berikutnya.
-
-Tahap pertama adalah analisis kebutuhan (requirement analysis), yaitu menggali kebutuhan admin, kasir, dan pembeli melalui observasi dan wawancara sebagaimana diuraikan pada Sub-bab 3.3, kemudian menuangkannya menjadi kebutuhan fungsional dan non-fungsional yang dibahas pada Sub-bab 3.6. Tahap kedua adalah desain sistem (system design), mencakup perancangan basis data, use case, activity diagram, dan struktur antarmuka, sebagaimana dibahas pada Sub-bab 3.7.
-
-Tahap ketiga adalah implementasi (coding), yaitu menerjemahkan hasil rancangan menjadi kode program menggunakan Laravel, Livewire, dan MySQL. Implementasi dilakukan secara modular, dimulai dari modul yang paling mendasar (produk dan kategori) sampai modul yang bergantung pada modul lain (pemesanan online yang membutuhkan data produk dan stok sudah tersedia lebih dulu). Tahap keempat adalah pengujian (testing), memakai metode black box testing terhadap setiap fitur yang sudah dibangun, dengan rincian skenario pengujian pada Sub-bab 3.8. Tahap kelima, pemeliharaan (maintenance), mencakup perbaikan bug yang ditemukan selama pengujian maupun setelah sistem digunakan, termasuk penyesuaian kecil pada alur kerja apabila ditemukan celah pada tahap sebelumnya.
-
-Kelima tahap tersebut digambarkan secara berurutan pada Gambar 3.1. Pada praktiknya tetap ada penyesuaian kecil ketika berpindah dari satu modul ke modul lain, misalnya penambahan tabel riwayat status pesanan setelah modul pemesanan online berjalan. Namun pola besar pengembangan tetap mengikuti urutan Waterfall, bukan iterasi bebas seperti pada Agile atau Scrum.
+Penelitian ini bertujuan membangun sistem Point of Sale (POS) untuk CATCHA yang menangani tiga alur utama: transaksi tatap muka di kasir, pengelolaan stok bahan baku berbasis resep produk, dan pemesanan online dengan verifikasi pembayaran QRIS. Sistem dikembangkan menggunakan metode Waterfall, dipilih karena kebutuhan ketiga alur tersebut sudah dapat dipetakan sejak awal dari permasalahan yang diuraikan pada Bab I, sehingga tahapan pengembangan dapat disusun berurutan tanpa perlu berulang kali mengubah rancangan besar sistem. Tahapan penelitian secara garis besar dapat dilihat pada Gambar 3.1.
 
 **[Gambar 3.1 — Tahapan Metode Waterfall pada Pengembangan Sistem]**
 
-## 3.5 Analisis Sistem Berjalan
+Tahap pertama adalah analisis kebutuhan, yaitu menggali kebutuhan admin, kasir, dan pembeli melalui observasi langsung terhadap operasional CATCHA serta wawancara dengan pemilik dan kasir. Tahap kedua adalah desain sistem, mencakup perancangan basis data, use case, dan activity diagram, sebagaimana diuraikan pada Sub-bab 3.2. Tahap ketiga adalah implementasi, yaitu menerjemahkan rancangan menjadi kode program menggunakan Laravel 11, Livewire 3, dan MySQL, dibahas melalui tiga alur inti pada Sub-bab 3.3 sampai 3.5. Tahap keempat adalah pengujian memakai black box testing terhadap seluruh fitur yang sudah dibangun, dengan rincian skenario pada Sub-bab 3.6. Tahap kelima adalah pemeliharaan, mencakup perbaikan bug yang ditemukan selama pengujian maupun setelah sistem digunakan.
 
-Sebelum sistem ini dibangun, proses penjualan di CATCHA dijalankan dengan cara [BUTUH DATA: uraikan kondisi nyata proses pencatatan penjualan CATCHA saat ini — apakah masih manual dengan buku/nota, memakai aplikasi kasir sederhana, atau kombinasi keduanya]. Kondisi ini sejalan dengan permasalahan umum yang sudah diuraikan pada latar belakang Bab I, yaitu pencatatan transaksi yang rawan tidak konsisten dan pemantauan stok yang tidak selalu diperbarui tepat waktu.
+## 3.2 Perancangan Basis Data
 
-Pada sisi stok, CATCHA [BUTUH DATA: jelaskan cara pengelolaan stok bahan baku/produk yang berjalan sekarang — dicatat manual, diperkirakan dari pengalaman kasir, atau memakai catatan terpisah] menghadapi kesulitan mengetahui secara pasti kapan bahan baku tertentu perlu dibeli ulang. Tanpa pencatatan yang terhubung ke resep produk, pemilik usaha baru menyadari bahan baku yang hampir habis ketika stok sudah benar-benar menipis, yang berpotensi mengganggu pelayanan pada jam ramai.
+Perancangan basis data dilakukan untuk memastikan tiga alur utama sistem (transaksi kasir, stok bahan baku, pemesanan online) tercatat dalam struktur data yang saling terhubung dan tidak saling menimpa. Rancangan basis data dituangkan dalam bentuk entity relationship diagram (ERD) yang ditunjukkan pada Gambar 3.2.
 
-Pada sisi pemesanan, pelanggan yang ingin memesan tanpa datang langsung ke lokasi [BUTUH DATA: jelaskan cara pemesanan yang berjalan sekarang, misalnya lewat chat pribadi/WhatsApp, atau memang belum tersedia sama sekali]. Cara ini membutuhkan kasir untuk memeriksa pesan masuk secara manual di sela-sela melayani pelanggan di kasir, sehingga ada risiko pesanan terlewat atau terlambat diproses, terutama saat kasir sedang sibuk melayani transaksi tatap muka.
+**[Gambar 3.2 — Entity Relationship Diagram Sistem POS CATCHA]**
 
-Berdasarkan gambaran proses berjalan tersebut, tiga persoalan pokok dijadikan dasar perancangan sistem: pencatatan transaksi dan stok yang terpisah-pisah, ketiadaan alur baku untuk pesanan yang datang di luar transaksi tatap muka, dan proses pembayaran nontunai yang belum punya status yang jelas ketika dilakukan tanpa verifikasi otomatis dari penyedia layanan pembayaran. Ketiga persoalan ini menjadi acuan langsung bagi kebutuhan fungsional yang dirumuskan pada Sub-bab 3.6.
+Salah satu tabel penopang perhitungan modal produk adalah tabel `product_recipes`, yang menghubungkan setiap produk dengan bahan baku beserta takaran yang dibutuhkan per satu produk. Struktur tabel ini ditunjukkan pada Tabel 3.1.
 
-## 3.6 Analisis Kebutuhan Sistem
+Tabel 3.1 Struktur Tabel `product_recipes`
 
-Analisis kebutuhan sistem disusun berdasarkan hasil analisis sistem berjalan pada Sub-bab 3.5 serta ruang lingkup penelitian yang sudah ditetapkan pada Bab I. Kebutuhan dibagi menjadi kebutuhan fungsional, yaitu fitur yang harus disediakan sistem, dan kebutuhan non-fungsional, yaitu kualitas yang harus dipenuhi sistem di luar daftar fitur tersebut.
+| Kolom | Tipe Data | Keterangan |
+|---|---|---|
+| id | bigint, primary key | Id baris resep |
+| product_id | string, foreign key ke `products.product_id` | Produk yang memiliki resep ini |
+| raw_material_id | bigint, foreign key ke `raw_materials.id` | Bahan baku yang dipakai |
+| quantity_required | decimal(12,2) | Takaran bahan baku per satu produk |
+| created_at, updated_at | timestamp | Waktu pencatatan |
 
-Pembagian ini penting supaya perancangan pada Sub-bab 3.7 punya acuan yang jelas: setiap use case dan activity diagram yang dirancang harus bisa ditelusuri balik ke salah satu poin kebutuhan fungsional berikut, dan setiap keputusan teknis (pemilihan Laravel, Livewire, struktur middleware) harus bisa dijelaskan kaitannya dengan kebutuhan non-fungsional yang ditetapkan.
+Kombinasi `product_id` dan `raw_material_id` diberi constraint unique, sehingga satu produk tidak bisa memiliki dua baris resep untuk bahan baku yang sama; jika admin menambahkan bahan yang sudah ada, sistem menjumlahkan takarannya alih-alih membuat baris duplikat. Rancangan ini menjadi dasar bagi perhitungan modal produk otomatis yang dibahas pada Sub-bab 3.3.
 
-### 3.6.1 Kebutuhan Fungsional
+## 3.3 Perhitungan Modal Produk dari Resep Bahan Baku
 
-Kebutuhan fungsional untuk peran admin meliputi: mengelola data produk (tambah, ubah, hapus, unggah gambar) beserta kategori produk; mengelola data bahan baku dan resep produk agar stok bahan baku otomatis berkurang sesuai komposisi tiap produk; mengelola data supplier dan pembelian bahan baku (purchase order); melihat data penjualan, detail transaksi, laporan laba, dan laporan shift kasir; melihat riwayat pergerakan stok produk maupun bahan baku; mengelola data pengguna kasir; serta menggunakan chatbot admin untuk menanyakan kondisi stok, penjualan, dan operasional toko secara singkat.
+Salah satu kebutuhan utama CATCHA adalah mengetahui modal (harga pokok) setiap produk tanpa admin harus menghitungnya secara manual setiap kali harga bahan baku berubah. Sistem menghitung modal produk secara otomatis berdasarkan resep bahan baku yang diinput admin, dikalikan harga satuan bahan baku dari transaksi pembelian (purchase) terakhir.
 
-Kebutuhan fungsional untuk peran kasir meliputi: membuka dan menutup shift kerja sebelum dan sesudah bertugas; memilih produk ke keranjang transaksi dan mengubah jumlahnya secara langsung; berpindah halaman tanpa kehilangan isi keranjang karena keranjang tersimpan per kasir sampai transaksi diselesaikan; memilih metode pembayaran (Cash, Transfer, atau QRIS) dan menghitung kembalian; mencetak struk setelah transaksi selesai; menerima notifikasi ketika ada pesanan online baru berupa badge, popup, dan bunyi notifikasi; melihat dan mengelola antrian pesanan online dalam tampilan kanban; memverifikasi atau menolak pembayaran QRIS milik pembeli online; serta mengubah status pesanan online dari diterima, diproses, hingga selesai atau dibatalkan.
+Sebagai ilustrasi, Tabel 3.2 menunjukkan data resep produk "Ragdoll Bliss Oat Milk Cold Whisk" beserta harga satuan bahan baku yang dipakai, diambil langsung dari data yang tersimpan pada sistem.
 
-Kebutuhan fungsional untuk peran pembeli meliputi: melihat daftar menu dan detail produk melalui halaman shop; menambahkan produk ke keranjang beserta kustomisasi bila tersedia (misalnya tingkat es atau gula); melakukan checkout dan memilih metode pembayaran cash atau QRIS manual; melihat detail dan status pesanan yang sudah dibuat; membayar ulang atau menunggu verifikasi apabila pembayaran QRIS sebelumnya ditolak; membatalkan pesanan selama masih berstatus pending; serta mengelola profil akun pembeli.
+Tabel 3.2 Contoh Perhitungan Modal Produk dari Resep
 
-Selain kebutuhan per peran di atas, sistem juga membutuhkan mekanisme lintas peran berupa pencatatan riwayat setiap perubahan status pesanan dan status pembayaran (siapa yang mengubah, kapan, dari status apa ke status apa, dan catatan tambahan), serta mekanisme pengurangan dan pengembalian stok bahan baku yang konsisten baik untuk transaksi offline di kasir maupun pesanan online, termasuk pengembalian stok otomatis ketika pesanan online yang stoknya sudah dikurangi kemudian dibatalkan.
+| Bahan Baku | Takaran per Produk | Harga Satuan Terakhir | Biaya |
+|---|---|---|---|
+| Bubuk Matcha | 5,00 gram | Rp300,00 / gram | Rp1.500,00 |
+| Air | 40,00 ml | Rp1,00 / ml | Rp40,00 |
+| Susu Oat (Oat Milk) | 180,00 ml | Rp45,00 / ml | Rp8.100,00 |
+| Vanilla Syrup | 10,00 ml | Rp80,00 / ml | Rp800,00 |
+| Cup | 1,00 pcs | Rp500,00 / pcs | Rp500,00 |
+| Es Batu | 120,00 gram | Rp1,00 / gram | Rp120,00 |
+| **Total Modal** | | | **Rp11.060,00** |
 
-### 3.6.2 Kebutuhan Non-Fungsional
+Nilai total modal pada Tabel 3.2 sama persis dengan nilai `buy_price` produk tersebut yang tersimpan di basis data, karena keduanya dihasilkan oleh proses perhitungan yang sama. Proses tersebut dirangkum dalam Algoritma 3.1.
 
-Aspek keamanan menuntut pemisahan hak akses yang tegas antara admin, kasir, dan pembeli, sehingga satu peran tidak bisa mengakses fitur milik peran lain. Kebutuhan ini dipenuhi dengan middleware autentikasi dan otorisasi berbasis role dari paket Spatie Laravel Permission, dikombinasikan dengan middleware verifikasi email dan pengecekan shift aktif khusus untuk halaman transaksi kasir.
+Algoritma 3.1. Perhitungan Modal Produk dari Resep Bahan Baku
 
-Pada aspek performa, transaksi kasir dan pengurangan stok perlu berjalan cepat dan konsisten meski terjadi hampir bersamaan, misalnya ketika kasir menyelesaikan transaksi offline pada saat yang sama sebuah pesanan online dikonfirmasi dan mengurangi stok bahan baku yang sama. Kebutuhan ini ditangani dengan transaksi basis data (database transaction) dan penguncian baris (lockForUpdate) pada proses yang mengubah angka stok, supaya tidak terjadi kondisi stok minus akibat dua proses yang berjalan bersamaan.
+**Input**
+Daftar resep produk (pasangan bahan baku dan takaran per produk)
 
-Kegunaan (usability) menjadi perhatian tersendiri pada antarmuka kasir: proses memilih produk, mengubah jumlah, dan menyelesaikan pembayaran dirancang bisa dilakukan dalam jumlah klik yang sesedikit mungkin, mengingat kasir bekerja di bawah tekanan waktu saat melayani pelanggan yang mengantre. Notifikasi pesanan online pada halaman kasir juga dirancang agar tidak mengharuskan kasir berpindah halaman hanya untuk mengetahui ada pesanan baru.
+**Proses**
+1. Mengambil seluruh transaksi pembelian bahan baku (purchase item) yang tercatat, diurutkan dari yang paling baru.
+2. Untuk setiap bahan baku, mengambil satu transaksi pembelian terakhirnya saja.
+3. Menghitung harga satuan bahan baku tersebut, yaitu harga beli dibagi jumlah yang dibeli.
+4. Untuk setiap baris resep produk, mengalikan takaran bahan baku dengan harga satuan bahan baku pada langkah 3.
+5. Menjumlahkan seluruh hasil perkalian pada langkah 4 menjadi satu nilai total.
+6. Jika suatu bahan baku belum pernah dibeli, harga satuannya dihitung sebagai 0.
 
-Keandalan data (reliability) dijaga dengan mencatat setiap perubahan stok dan status pesanan sebagai baris riwayat tersendiri (stock movement dan order status history), bukan menimpa nilai lama begitu saja. Pendekatan ini membuat data pada sistem dapat ditelusuri kembali sewaktu-waktu dibutuhkan, misalnya ketika admin perlu mengecek mengapa stok suatu bahan baku berkurang drastis pada tanggal tertentu.
+**Output**
+Nilai total modal produk (`buy_price`), yang kemudian dipakai untuk memperbarui kolom `buy_price` dan `product_profit` pada produk terkait.
 
-Seluruh kebutuhan fungsional dan non-fungsional di atas selanjutnya diterjemahkan menjadi rancangan sistem yang lebih rinci, mencakup use case diagram, activity diagram, entity relationship diagram, serta struktur tabel basis data. Rancangan tersebut disajikan sebagai hasil perancangan pada Bab IV, sejalan dengan alur pembahasan yang mengikuti tujuan penelitian pada Bab I.
+Implementasi dari algoritma tersebut pada `app/Http/Controllers/ProductRecipeController.php` ditunjukkan sebagai berikut:
 
-## 3.7 Metode Pengujian Sistem
+```php
+protected function latestMaterialUnitCosts()
+{
+    return PurchaseItem::query()
+        ->whereNotNull('raw_material_id')
+        ->where('quantity', '>', 0)
+        ->latest('id')
+        ->get()
+        ->unique('raw_material_id')
+        ->mapWithKeys(fn (PurchaseItem $item) => [
+            $item->raw_material_id => (float) $item->buy_price / (float) $item->quantity,
+        ]);
+}
 
-Pengujian sistem pada penelitian ini menggunakan metode black box testing, yaitu pengujian yang berfokus pada kesesuaian input dan output setiap fitur tanpa memeriksa struktur kode program di baliknya. Metode ini dipilih karena tujuan pengujian adalah memastikan setiap fitur berjalan sesuai kebutuhan fungsional pada Sub-bab 3.6.1, bukan mengevaluasi efisiensi algoritma di dalamnya.
+protected function calculateRecipeCost($recipes): float
+{
+    $materialCosts = $this->latestMaterialUnitCosts();
 
-Pengujian dilakukan per modul, dimulai dari modul autentikasi dan hak akses (login admin, login kasir, login pembeli, serta memastikan satu peran tidak bisa mengakses halaman milik peran lain), dilanjutkan modul pengelolaan produk dan kategori (tambah, ubah, hapus, termasuk validasi input yang salah), lalu modul transaksi kasir (pemilihan produk, perubahan jumlah, konsistensi keranjang saat kasir berpindah halaman, perhitungan total dan kembalian, pencetakan struk).
+    return (float) $recipes->map(function (float $quantityRequired, int|string $rawMaterialId) use ($materialCosts) {
+        return $quantityRequired * (float) ($materialCosts[$rawMaterialId] ?? 0);
+    })->sum();
+}
+```
 
-Pengujian berikutnya mencakup modul pemesanan online dan pembayaran, meliputi checkout dengan metode cash maupun QRIS, verifikasi dan penolakan pembayaran QRIS oleh kasir, perubahan status pesanan dari pending sampai completed atau cancelled, serta pengurangan dan pengembalian stok bahan baku pada titik yang tepat (saat konfirmasi dan saat pembatalan). Pengujian turut mencakup modul pembelian bahan baku dari supplier serta modul laporan (penjualan, laba, shift kasir, dan pergerakan stok) untuk memastikan angka yang ditampilkan sesuai dengan data transaksi yang tersimpan.
+Fungsi `latestMaterialUnitCosts()` mengambil seluruh baris `purchase_items` yang punya `raw_material_id`, diurutkan dari id terbesar (transaksi paling baru), kemudian `unique('raw_material_id')` menyisakan satu baris per bahan baku, yaitu baris transaksi pembelian terakhirnya. Setiap baris itu diubah menjadi harga satuan (`buy_price` dibagi `quantity`) melalui `mapWithKeys()`, menghasilkan pemetaan id bahan baku ke harga satuannya.
 
-Setiap skenario pengujian dicatat dalam format tabel yang berisi kolom skenario pengujian, hasil yang diharapkan, hasil yang didapat, dan kesimpulan (valid/tidak valid), sebagaimana akan ditampilkan pada Bab IV. Format pencatatan ini dipilih karena memudahkan penelusuran ulang apabila di kemudian hari ditemukan fitur yang perlu diuji ulang setelah ada perubahan kode program.
+Fungsi `calculateRecipeCost()` menerima kumpulan resep (hasil pengelompokan per bahan baku), lalu untuk setiap baris resep mengalikan `quantity_required` dengan harga satuan bahan baku terkait, dan menjumlahkan seluruh hasilnya dengan `sum()`. Bahan baku yang belum pernah dibeli (`$materialCosts[$rawMaterialId] ?? 0`) dihitung berbiaya Rp0, dan sistem menampilkan peringatan pada antarmuka admin agar modal produk tersebut tidak dianggap final sebelum bahan baku itu direstock.
+
+## 3.4 Transaksi Kasir dan Pengurangan Stok Bahan Baku
+
+Setiap transaksi kasir harus mengurangi stok bahan baku sesuai resep produk yang terjual, dan proses ini harus tetap konsisten meski beberapa transaksi terjadi hampir bersamaan pada bahan baku yang sama. Alur transaksi kasir ditunjukkan pada Gambar 3.3.
+
+**[Gambar 3.3 — Activity Diagram Transaksi Kasir]**
+
+Sebagai ilustrasi, Tabel 3.3 menunjukkan hasil satu transaksi kasir (INV-20260713-0001) beserta rincian produk yang terjual, diambil dari data transaksi yang tersimpan pada sistem.
+
+Tabel 3.3 Contoh Rincian Transaksi Kasir
+
+| No | Produk | Qty | Harga Jual | Sub Total | Profit |
+|---|---|---|---|---|---|
+| 1 | Calico Swirl Coconut Matcha Cold Whisk | 33 | Rp40.000,00 | Rp1.320.000,00 | Rp808.500,00 |
+| 2 | Siamese Sunset MegaPaw Bottle 1000 ml | 20 | Rp76.000,00 | Rp1.520.000,00 | Rp1.056.000,00 |
+| | | | **Total** | **Rp2.840.000,00** | |
+
+Proses pengurangan stok bahan baku pada setiap transaksi dirangkum dalam Algoritma 3.2.
+
+Algoritma 3.2. Pengurangan Stok Bahan Baku pada Transaksi Kasir
+
+**Input**
+Daftar keranjang transaksi kasir (produk dan jumlah yang dibeli)
+
+**Proses**
+1. Mengunci baris shift kasir yang sedang aktif agar tidak berubah selama transaksi diproses.
+2. Mencatat data penjualan (sale) beserta total, metode pembayaran, dan kembalian.
+3. Untuk setiap produk pada keranjang, mengunci baris produk beserta resepnya.
+4. Jika produk belum punya resep, transaksi dibatalkan dan sistem menampilkan pesan kesalahan.
+5. Mencatat rincian penjualan (detail sale) beserta modal dan profit per produk.
+6. Untuk setiap bahan baku pada resep produk, mengunci baris bahan baku tersebut.
+7. Menghitung stok bahan baku sesudah dikurangi jumlah yang terpakai.
+8. Jika stok sesudah dikurangi bernilai negatif, seluruh transaksi dibatalkan dan sistem menampilkan pesan stok tidak cukup.
+9. Menyimpan stok baru dan mencatat riwayat pergerakan stok (stock movement).
+10. Mengosongkan keranjang kasir setelah seluruh langkah di atas berhasil.
+
+**Output**
+Data penjualan tersimpan, stok bahan baku berkurang sesuai resep, dan riwayat pergerakan stok tercatat; atau seluruh proses dibatalkan (rollback) apabila salah satu pemeriksaan pada langkah 4 atau 8 gagal.
+
+Implementasi dari algoritma tersebut pada `app/Livewire/SellingProduct.php` ditunjukkan sebagai berikut:
+
+```php
+public function sellProduct()
+{
+    $sale_id = DB::transaction(function () {
+        $saleId = Sale::generateInvoiceNumber();
+        $activeShift = CashierShift::query()->open()
+            ->where('cashier_id', $this->cashier_id)
+            ->lockForUpdate()->firstOrFail();
+
+        Sale::create([...]);
+
+        foreach ($carts as $cart) {
+            $product = Product::where('product_id', $cart->product_id)
+                ->with('recipes.rawMaterial')->lockForUpdate()->firstOrFail();
+
+            if ($product->recipes->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'recipe' => 'Produk "'.$cart->product_name.'" belum punya resep bahan baku.',
+                ]);
+            }
+
+            DetailSale::create([...]);
+
+            foreach ($product->recipes as $recipe) {
+                $material = RawMaterial::whereKey($recipe->raw_material_id)->lockForUpdate()->firstOrFail();
+                $requiredQuantity = (float) $recipe->quantity_required * (int) $cart->quantity;
+                $quantityAfter = (float) $material->stock - $requiredQuantity;
+
+                if ($quantityAfter < 0) {
+                    throw ValidationException::withMessages([
+                        'stock' => 'Stok bahan "'.$material->name.'" tidak cukup untuk '.$cart->product_name.'.',
+                    ]);
+                }
+
+                $material->stock = $quantityAfter;
+                $material->save();
+
+                RawMaterialStockMovement::create([...]);
+            }
+        }
+
+        Cart::where('cashier_id', $this->cashier_id)->delete();
+        return $saleId;
+    });
+}
+```
+
+Seluruh proses dibungkus `DB::transaction()`, sehingga jika terjadi kegagalan pada langkah mana pun (produk belum punya resep, atau stok bahan baku tidak cukup), seluruh perubahan yang sudah terjadi di dalam transaksi tersebut ikut dibatalkan (rollback), termasuk data penjualan yang sudah sempat dibuat. Pemanggilan `lockForUpdate()` pada baris shift, produk, dan bahan baku mengunci baris tersebut di level basis data selama transaksi berlangsung, sehingga apabila dua kasir menjual produk dengan bahan baku yang sama secara hampir bersamaan, pengurangan stok tetap diproses satu per satu dan tidak menghasilkan angka stok yang salah akibat race condition.
+
+## 3.5 Pemesanan Online dan Verifikasi Pembayaran QRIS
+
+Pembeli dapat memesan produk secara online dan membayar melalui metode cash atau QRIS manual. Karena verifikasi QRIS dilakukan secara manual oleh kasir (tanpa API payment gateway), sistem perlu menahan pengurangan stok bahan baku sampai pembayaran benar-benar diverifikasi, agar stok tidak berkurang untuk pesanan yang ternyata belum dibayar. Alur ini ditunjukkan pada Gambar 3.4.
+
+**[Gambar 3.4 — Activity Diagram Pemesanan Online dan Verifikasi QRIS]**
+
+Sebagai ilustrasi, Tabel 3.4 menunjukkan satu pesanan online (ORD-20260714-005250-YQTK) yang sudah diverifikasi dan dikonfirmasi, diambil dari data yang tersimpan pada sistem.
+
+Tabel 3.4 Contoh Data Pesanan Online
+
+| Order Code | Item | Qty | Harga | Status | Status Pembayaran |
+|---|---|---|---|---|---|
+| ORD-20260714-005250-YQTK | Add On Bottled | 3 | Rp2.000,00 | confirmed | paid |
+
+Proses checkout dan konfirmasi pesanan dirangkum dalam Algoritma 3.3.
+
+Algoritma 3.3. Checkout dan Konfirmasi Pesanan Online
+
+**Input**
+Keranjang belanja pembeli (`BuyerCart`) dan metode pembayaran yang dipilih
+
+**Proses**
+1. Mengunci baris keranjang pembeli beserta isinya.
+2. Untuk setiap item pada keranjang, mengunci baris produk beserta resepnya dan memeriksa ketersediaan stok bahan baku.
+3. Jika stok bahan baku tidak cukup untuk salah satu item, checkout dibatalkan dan sistem menampilkan pesan kesalahan.
+4. Membuat data pesanan (order) dengan status pending; status pembayaran diisi "unpaid" untuk cash atau "waiting_verification" untuk QRIS.
+5. Mencatat rincian item pesanan dan mengosongkan keranjang pembeli.
+6. Kasir memverifikasi bukti pembayaran QRIS secara manual; jika sesuai, status pembayaran diubah menjadi "paid".
+7. Setelah status pembayaran "paid" (atau metode cash), kasir mengonfirmasi pesanan: sistem mengunci baris produk dan bahan baku pada resep, lalu mengurangi stok bahan baku sesuai jumlah pesanan.
+8. Jika pesanan dibatalkan setelah stok sempat dikurangi, sistem mengembalikan (restore) stok bahan baku yang sudah terpakai.
+
+**Output**
+Pesanan tersimpan dengan status dan status pembayaran yang konsisten; stok bahan baku hanya berkurang setelah pembayaran terverifikasi dan pesanan dikonfirmasi.
+
+Implementasi dari langkah checkout dan konfirmasi pada `app/Services/OnlineOrdering/OrderCheckoutService.php` dan `app/Services/OnlineOrdering/OrderWorkflowService.php` ditunjukkan sebagai berikut:
+
+```php
+public function checkout(User $buyer, string $paymentMethod, ?string $note = null): Order
+{
+    return DB::transaction(function () use ($buyer, $paymentMethod, $note) {
+        $cart = BuyerCart::query()->where('user_id', $buyer->id)
+            ->with('items.product')->lockForUpdate()->first();
+
+        foreach ($cart->items as $cartItem) {
+            $product = Product::query()->with('recipes.rawMaterial')
+                ->where('product_id', $cartItem->product_id)->lockForUpdate()->firstOrFail();
+
+            if (! $product->hasAvailableStock((int) $cartItem->quantity)) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Stok bahan untuk '.$product->product_name.' tidak cukup untuk checkout.',
+                ]);
+            }
+            // ...hitung subtotal, simpan order + order item
+        }
+
+        $cart->items()->delete();
+        return $order->load('items');
+    });
+}
+
+public function confirm(Order $order, User $actor): Order
+{
+    return DB::transaction(function () use ($order, $actor) {
+        $order = Order::whereKey($order->id)->with('items')->lockForUpdate()->firstOrFail();
+
+        if ($order->payment_method === Order::PAYMENT_QRIS
+            && $order->payment_status !== Order::PAYMENT_STATUS_PAID) {
+            throw ValidationException::withMessages([
+                'payment_status' => 'Verifikasi pembayaran QRIS terlebih dahulu sebelum konfirmasi pesanan.',
+            ]);
+        }
+
+        foreach ($order->items->sortBy('product_id') as $item) {
+            $product = Product::where('product_id', $item->product_id)
+                ->with('recipes.rawMaterial')->lockForUpdate()->firstOrFail();
+
+            $this->deductRecipeMaterials($product, (int) $item->quantity, $order->order_code, $actor);
+        }
+
+        $order->update([
+            'status' => Order::STATUS_CONFIRMED,
+            'stock_deducted_at' => now(),
+        ]);
+
+        return $order->fresh(['items', 'buyer']);
+    });
+}
+```
+
+Pada `checkout()`, pemeriksaan `hasAvailableStock()` dilakukan sebelum data pesanan dibuat, sehingga pembeli tidak bisa checkout produk yang bahan bakunya tidak cukup, tetapi stok belum dikurangi pada tahap ini. Pada `confirm()`, sistem terlebih dulu memastikan pesanan berstatus QRIS sudah "paid" sebelum melanjutkan; jika belum, `ValidationException` dilempar dan stok tidak disentuh sama sekali. Pengurangan stok baru terjadi di dalam `deductRecipeMaterials()`, yang polanya sama dengan pengurangan stok pada transaksi kasir di Sub-bab 3.4: mengunci baris bahan baku, menghitung stok sesudah dikurangi, dan membatalkan seluruh proses apabila hasilnya negatif. Kolom `stock_deducted_at` dipakai sebagai penanda agar stok pesanan yang sama tidak bisa dikurangi dua kali, dan menjadi acuan bagi proses pembatalan pesanan untuk menentukan apakah stok perlu dikembalikan.
+
+## 3.6 Metode Pengujian Sistem
+
+Pengujian sistem pada penelitian ini menggunakan metode black box testing, yaitu pengujian yang berfokus pada kesesuaian input dan output setiap fitur tanpa memeriksa struktur kode program di baliknya. Metode ini dipilih karena tujuan pengujian adalah memastikan setiap fitur berjalan sesuai kebutuhan, bukan mengevaluasi efisiensi algoritma di dalamnya.
+
+Pengujian dilakukan per modul, dimulai dari modul autentikasi dan hak akses (login admin, kasir, pembeli, serta memastikan satu peran tidak bisa mengakses halaman milik peran lain), dilanjutkan modul pengelolaan produk, resep, dan bahan baku (tambah, ubah, hapus, termasuk validasi input yang salah), lalu modul transaksi kasir dan pengurangan stok sebagaimana dibahas pada Sub-bab 3.4.
+
+Pengujian berikutnya mencakup modul pemesanan online dan verifikasi QRIS sebagaimana dibahas pada Sub-bab 3.5, meliputi checkout, verifikasi dan penolakan pembayaran, perubahan status pesanan, serta pengurangan dan pengembalian stok bahan baku pada titik yang tepat. Pengujian turut mencakup modul pembelian bahan baku dari supplier serta modul laporan (penjualan, laba, shift kasir, dan pergerakan stok) untuk memastikan angka yang ditampilkan sesuai dengan data transaksi yang tersimpan.
+
+Setiap skenario pengujian dicatat dalam format tabel yang berisi kolom skenario pengujian, hasil yang diharapkan, hasil yang didapat, dan kesimpulan (valid/tidak valid), sebagaimana ditampilkan pada Bab IV.
